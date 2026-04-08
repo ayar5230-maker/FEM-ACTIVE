@@ -14,10 +14,16 @@ export function useAuth(): AuthState {
   useEffect(() => {
     let mounted = true
 
+    // Safety timeout — never block the UI forever
+    const timeout = setTimeout(() => {
+      if (mounted) { setProfile(null); setLoading(false) }
+    }, 4000)
+
     async function loadProfile() {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session?.user) {
+          clearTimeout(timeout)
           if (mounted) { setProfile(null); setLoading(false) }
           return
         }
@@ -28,8 +34,10 @@ export function useAuth(): AuthState {
           .eq('id', session.user.id)
           .single()
 
+        clearTimeout(timeout)
         if (mounted) { setProfile(data ?? null); setLoading(false) }
       } catch {
+        clearTimeout(timeout)
         if (mounted) { setProfile(null); setLoading(false) }
       }
     }
