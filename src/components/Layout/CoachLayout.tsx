@@ -7,15 +7,33 @@ import { signOut } from '../../lib/auth'
 import { useUnreadMessages } from '../../hooks/useUnreadMessages'
 import { useAuthContext } from '../../contexts/AuthContext'
 
-const navItems = [
-  { to: '/coach', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/coach/clients', label: 'Clients', icon: Users },
-  { to: '/coach/workouts', label: 'Training', icon: Dumbbell },
-  { to: '/coach/nutrition', label: 'Nutrition', icon: Apple },
-  { to: '/coach/checkins', label: 'Check-ins', icon: ClipboardCheck },
-  { to: '/coach/messages', label: 'Messages', icon: MessageSquare, hasUnread: true },
-  { to: '/coach/packages', label: 'Forfaits', icon: Package },
+const navSections = [
+  {
+    label: 'Main',
+    items: [
+      { to: '/coach', label: 'Dashboard', icon: LayoutDashboard, end: true },
+      { to: '/coach/clients', label: 'Clients', icon: Users },
+      { to: '/coach/checkins', label: 'Check-ins', icon: ClipboardCheck },
+      { to: '/coach/messages', label: 'Messages', icon: MessageSquare, hasUnread: true },
+    ],
+  },
+  {
+    label: 'Manage',
+    items: [
+      { to: '/coach/packages', label: 'Forfaits', icon: Package },
+    ],
+  },
+  {
+    label: 'Library',
+    items: [
+      { to: '/coach/workouts', label: 'Training', icon: Dumbbell },
+      { to: '/coach/nutrition', label: 'Nutrition', icon: Apple },
+    ],
+  },
 ]
+
+// flat list for mobile nav (just main items)
+const mobileItems = navSections.flatMap(s => s.items).slice(0, 5)
 
 export function CoachLayout() {
   const { profile } = useAuthContext()
@@ -39,32 +57,41 @@ export function CoachLayout() {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5">
-          {navItems.map(item => {
-            const Icon = item.icon
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) => `
-                  flex items-center gap-2.5 px-3 py-2 rounded-lg
-                  font-body text-sm font-medium transition-all
-                  ${isActive
-                    ? 'bg-brand-lavender text-brand-deep'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}
-                `}
-              >
-                <Icon size={16} strokeWidth={1.8} />
-                <span className="flex-1">{item.label}</span>
-                {item.hasUnread && unread > 0 && (
-                  <span className="bg-brand-violet text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                    {unread > 9 ? '9+' : unread}
-                  </span>
-                )}
-              </NavLink>
-            )
-          })}
+        <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+          {navSections.map(section => (
+            <div key={section.label}>
+              <p className="px-3 mb-1 font-body text-xs font-medium text-gray-400 tracking-wide uppercase">
+                {section.label}
+              </p>
+              <div className="space-y-0.5">
+                {section.items.map(item => {
+                  const Icon = item.icon
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.end}
+                      className={({ isActive }) => `
+                        flex items-center gap-2.5 px-3 py-2 rounded-lg
+                        font-body text-sm font-medium transition-all
+                        ${isActive
+                          ? 'bg-brand-lavender text-brand-deep'
+                          : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}
+                      `}
+                    >
+                      <Icon size={16} strokeWidth={1.8} />
+                      <span className="flex-1">{item.label}</span>
+                      {item.hasUnread && unread > 0 && (
+                        <span className="bg-brand-violet text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                          {unread > 9 ? '9+' : unread}
+                        </span>
+                      )}
+                    </NavLink>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Profile */}
@@ -91,7 +118,7 @@ export function CoachLayout() {
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
         <div className="flex">
-          {navItems.map(item => {
+          {mobileItems.map(item => {
             const Icon = item.icon
             return (
               <NavLink
