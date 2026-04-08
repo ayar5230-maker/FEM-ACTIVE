@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, MoreHorizontal, CreditCard, Pencil, Trash2, X } from 'lucide-react'
+import { Plus, MoreHorizontal, CreditCard, Pencil, Trash2, X, Link, Eye, Check } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { Button } from '../../components/ui/Button'
@@ -37,6 +37,8 @@ export function CoachPackages() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [menuOpen, setMenuOpen] = useState<string | null>(null)
+  const [previewPkg, setPreviewPkg] = useState<Package | null>(null)
+  const [copied, setCopied] = useState<string | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => { loadPackages() }, [])
@@ -95,6 +97,14 @@ export function CoachPackages() {
     setSaving(false)
     setShowModal(false)
     loadPackages()
+  }
+
+  async function copyLink(pkg: Package) {
+    const url = `${window.location.origin}/packages/${pkg.id}`
+    await navigator.clipboard.writeText(url)
+    setCopied(pkg.id)
+    setMenuOpen(null)
+    setTimeout(() => setCopied(null), 2000)
   }
 
   async function deletePackage(id: string) {
@@ -210,13 +220,26 @@ export function CoachPackages() {
                   <MoreHorizontal size={16} />
                 </button>
                 {menuOpen === pkg.id && (
-                  <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-36">
+                  <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-44">
+                    <button
+                      onClick={() => copyLink(pkg)}
+                      className="flex items-center gap-2 w-full px-3 py-2 font-body text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <Link size={13} /> Copier le lien
+                    </button>
+                    <button
+                      onClick={() => { setPreviewPkg(pkg); setMenuOpen(null) }}
+                      className="flex items-center gap-2 w-full px-3 py-2 font-body text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <Eye size={13} /> Aperçu
+                    </button>
                     <button
                       onClick={() => openEdit(pkg)}
                       className="flex items-center gap-2 w-full px-3 py-2 font-body text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Pencil size={13} /> Modifier
                     </button>
+                    <div className="border-t border-gray-100 my-1" />
                     <button
                       onClick={() => deletePackage(pkg.id)}
                       className="flex items-center gap-2 w-full px-3 py-2 font-body text-sm text-red-600 hover:bg-red-50"
@@ -234,6 +257,55 @@ export function CoachPackages() {
       {/* Click outside to close menu */}
       {menuOpen && (
         <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
+      )}
+
+      {/* Copied toast */}
+      {copied && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl shadow-lg font-body text-sm">
+          <Check size={14} className="text-green-400" /> Lien copié !
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {previewPkg && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-heading text-lg font-semibold text-gray-900">Aperçu du forfait</h2>
+              <button onClick={() => setPreviewPkg(null)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+                <X size={16} />
+              </button>
+            </div>
+            {/* Card preview */}
+            <div className="border border-gray-200 rounded-xl p-5 bg-gradient-to-br from-brand-lavender/30 to-white">
+              <p className="font-heading text-xl font-semibold text-brand-deep mb-1">{previewPkg.name}</p>
+              {previewPkg.description && (
+                <p className="font-body text-sm text-gray-500 mb-4">{previewPkg.description}</p>
+              )}
+              <div className="flex items-end gap-1 mb-4">
+                <span className="font-heading text-3xl font-bold text-brand-deep">${previewPkg.price_cad}</span>
+                <span className="font-body text-sm text-gray-400 mb-1">
+                  / {previewPkg.duration === 'Monthly' ? 'mois' :
+                     previewPkg.duration === 'Weekly' ? 'semaine' :
+                     previewPkg.duration === 'Yearly' ? 'an' : 'unique'}
+                </span>
+              </div>
+              <button className="w-full py-2.5 rounded-xl bg-brand-violet text-white font-body text-sm font-medium">
+                S'inscrire
+              </button>
+            </div>
+            <div className="mt-4 flex items-center gap-3 text-xs font-body text-gray-400">
+              <span className={`flex items-center gap-1 ${previewPkg.active ? 'text-green-600' : 'text-gray-400'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${previewPkg.active ? 'bg-green-500' : 'bg-gray-300'}`} />
+                {previewPkg.active ? 'Actif' : 'Inactif'}
+              </span>
+              <span className={`flex items-center gap-1 ${previewPkg.visible ? 'text-blue-600' : 'text-gray-400'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${previewPkg.visible ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                {previewPkg.visible ? 'Visible' : 'Masqué'}
+              </span>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Add / Edit Modal */}
