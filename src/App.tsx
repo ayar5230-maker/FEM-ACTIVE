@@ -11,25 +11,12 @@ import { CoachWorkouts } from './pages/coach/Workouts'
 import { CoachNutrition } from './pages/coach/Nutrition'
 import { CoachCheckIns } from './pages/coach/CheckIns'
 import { CoachMessages } from './pages/coach/Messages'
+import { ClientDetail } from './pages/coach/ClientDetail'
 import { ClientHome } from './pages/client/Home'
 import { ClientWorkouts } from './pages/client/MyWorkouts'
 import { ClientNutrition } from './pages/client/Nutrition'
 import { ClientCheckIn } from './pages/client/CheckIn'
 import { ClientMessages } from './pages/client/Messages'
-import { useAuthContext } from './contexts/AuthContext'
-import { PageLoader } from './components/ui/Spinner'
-
-function CoachPortal() {
-  const { profile } = useAuthContext()
-  if (!profile) return <PageLoader />
-  return <CoachLayout profile={profile} />
-}
-
-function ClientPortal() {
-  const { profile } = useAuthContext()
-  if (!profile) return <PageLoader />
-  return <ClientLayout profile={profile} />
-}
 
 export default function App() {
   const auth = useAuth()
@@ -38,21 +25,17 @@ export default function App() {
     <AuthContext.Provider value={auth}>
       <BrowserRouter>
         <Routes>
-          {/* Public */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* Coach */}
           <Route
             path="/coach"
-            element={
-              <AuthGuard role="coach">
-                <CoachPortal />
-              </AuthGuard>
-            }
+            element={<AuthGuard role="coach"><CoachLayout /></AuthGuard>}
           >
             <Route index element={<CoachDashboard />} />
             <Route path="clients" element={<CoachClients />} />
+            <Route path="clients/:clientId" element={<ClientDetail />} />
             <Route path="workouts" element={<CoachWorkouts />} />
             <Route path="nutrition" element={<CoachNutrition />} />
             <Route path="checkins" element={<CoachCheckIns />} />
@@ -62,11 +45,7 @@ export default function App() {
           {/* Client */}
           <Route
             path="/client"
-            element={
-              <AuthGuard role="client">
-                <ClientPortal />
-              </AuthGuard>
-            }
+            element={<AuthGuard role="client"><ClientLayout /></AuthGuard>}
           >
             <Route index element={<ClientHome />} />
             <Route path="workouts" element={<ClientWorkouts />} />
@@ -75,7 +54,6 @@ export default function App() {
             <Route path="messages" element={<ClientMessages />} />
           </Route>
 
-          {/* Fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
