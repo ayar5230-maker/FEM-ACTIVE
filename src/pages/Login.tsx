@@ -38,30 +38,42 @@ export function LoginPage() {
     }, 10000)
 
     if (mode === 'login') {
-      const { data, error: err } = await signIn(email, password)
-      clearTimeout(timer)
-      if (err || !data.user) {
-        setError('Email ou mot de passe incorrect.')
-        setSubmitting(false)
-        return
-      }
-      // Directly fetch profile and navigate — don't rely on onAuthStateChange
-      const { data: profData, error: profErr } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single()
+      try {
+        console.log('[Login] calling signIn...')
+        const { data, error: err } = await signIn(email, password)
+        clearTimeout(timer)
+        console.log('[Login] signIn result:', { user: data?.user?.id, err })
 
-      const prof = profData as Profile | null
+        if (err || !data.user) {
+          setError(`Email ou mot de passe incorrect. (${err?.message ?? 'no user'})`)
+          setSubmitting(false)
+          return
+        }
 
-      if (profErr || !prof) {
-        setError(`Erreur de profil : ${profErr?.message ?? 'introuvable'}`)
+        console.log('[Login] fetching profile...')
+        const { data: profData, error: profErr } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single()
+
+        console.log('[Login] profile result:', { profData, profErr })
+        const prof = profData as Profile | null
+
+        if (profErr || !prof) {
+          setError(`Erreur de profil : ${profErr?.message ?? 'introuvable'}`)
+          setSubmitting(false)
+          return
+        }
+        setProfile(prof)
+        navigate(prof.role === 'coach' ? '/coach' : '/client', { replace: true })
+      } catch (ex) {
+        clearTimeout(timer)
+        const msg = ex instanceof Error ? ex.message : String(ex)
+        console.error('[Login] exception:', msg)
+        setError(`Erreur inattendue : ${msg}`)
         setSubmitting(false)
-        return
       }
-      // Set profile in context BEFORE navigating so AuthGuard doesn't bounce us back
-      setProfile(prof)
-      navigate(prof.role === 'coach' ? '/coach' : '/client', { replace: true })
     } else {
       if (!fullName.trim()) {
         clearTimeout(timer)
