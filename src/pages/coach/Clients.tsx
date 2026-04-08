@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuthContext } from '../../contexts/AuthContext'
+import { useToast } from '../../hooks/useToast'
+import { ToastContainer } from '../../components/ui/Toast'
+import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { Spinner } from '../../components/ui/Spinner'
 import type { Profile } from '../../lib/types'
@@ -20,14 +23,29 @@ const statusColors: Record<string, string> = {
 export function CoachClients() {
   const { profile } = useAuthContext()
   const navigate = useNavigate()
+  const { toasts, addToast, removeToast } = useToast()
   const [clients, setClients] = useState<ClientRow[]>([])
+  const [pendingClients, setPendingClients] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [assigning, setAssigning] = useState<string | null>(null)
+  const [forfaitMap, setForfaitMap] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!profile) return
     loadClients()
+    loadPendingClients()
   }, [profile])
+
+  async function loadPendingClients() {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('role', 'client')
+      .is('coach_id', null)
+      .order('created_at', { ascending: false })
+    setPendingClients(data ?? [])
+  }
 
   async function loadClients() {
     if (!profile) return
@@ -42,7 +60,6 @@ export function CoachClients() {
 
     if (!rawClients) { setLoading(false); return }
 
-    // Calculate adherence for each client
     const enriched = await Promise.all(rawClients.map(async (c) => {
       const created = new Date(c.created_at)
       const now = new Date()
@@ -75,6 +92,29 @@ export function CoachClients() {
     setLoading(false)
   }
 
+  async function handleAssign(clientId: string) {
+    if (!profile) return
+    setAssigning(clientId)
+    const forfait = forfaitMap[clientId] || ''
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        coach_id: profile.id,
+        forfait: forfait || null,
+      })
+      .eq('id', clientId)
+
+    if (error) {
+      addToast('Erreur lors de l\'assignation', 'error')
+    } else {
+      addToast('Cliente assignée avec succès ! 💜', 'success')
+      loadPendingClients()
+      loadClients()
+    }
+    setAssigning(null)
+  }
+
   function getStatus(client: ClientRow): string {
     if (client.adherence >= 70) return 'active'
     if (client.adherence > 0) return 'pending'
@@ -88,12 +128,67 @@ export function CoachClients() {
 
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto">
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-heading text-3xl font-semibold text-brand-deep">Clientes</h1>
-          <p className="font-body text-brand-deep/50 mt-1">{clients.length} cliente{clients.length > 1 ? 's' : ''} enregistrée{clients.length > 1 ? 's' : ''}</p>
+          <p className="font-body text-brand-deep/50 mt-1">{clients.length} cliente{clients.length > 1 ? 's' : ''} active{clients.length > 1 ? 's' : ''}</p>
         </div>
       </div>
+
+      {/* Nouvelles inscriptions */}
+      {pendingClients.length > 0 && (
+        <Card className="mb-6 border-brand-violet/30 bg-brand-lavender/30">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="w-2 h-2 rounded-full bg-brand-violet animate-pulse" />
+            <h2 className="font-heading text-lg font-semibold text-brand-deep">
+              Nouvelles inscriptions
+            </h2>
+            <span className="px-2 py-0.5 bg-brand-violet text-white rounded-full font-body text-xs font-bold">
+              {pendingClients.length}
+            </span>
+          </div>
+          <div className="space-y-3">
+            {pendingClients.map(client => (
+              <div
+                key={client.id}
+                className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white rounded-xl p-4 border border-brand-lavender"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-9 h-9 rounded-full bg-brand-deep flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                    {(client.full_name ?? '?')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-body text-sm font-medium text-brand-deep">{client.full_name ?? '—'}</p>
+                    <p className="font-body text-xs text-brand-deep/40">{client.email}</p>
+                    <p className="font-body text-xs text-brand-deep/30">
+                      Inscrite le {new Date(client.created_at).toLocaleDateString('fr-CA', { month: 'long', day: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Forfait (ex: Premium 3 mois)"
+                    value={forfaitMap[client.id] ?? ''}
+                    onChange={e => setForfaitMap(prev => ({ ...prev, [client.id]: e.target.value }))}
+                    className="px-3 py-2 rounded-xl border border-brand-lavender font-body text-sm
+                      focus:outline-none focus:ring-2 focus:ring-brand-violet/30 w-48"
+                  />
+                  <Button
+                    size="sm"
+                    loading={assigning === client.id}
+                    onClick={() => handleAssign(client.id)}
+                  >
+                    Assigner
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Search */}
       <div className="mb-6">
@@ -114,7 +209,7 @@ export function CoachClients() {
         <Card padding="sm">
           {filtered.length === 0 ? (
             <p className="font-body text-sm text-brand-deep/40 text-center py-8">
-              {search ? 'Aucun résultat' : 'Aucune cliente pour le moment'}
+              {search ? 'Aucun résultat' : 'Aucune cliente active pour le moment'}
             </p>
           ) : (
             <>
@@ -147,9 +242,7 @@ export function CoachClients() {
                             </div>
                           </td>
                           <td className="px-4 py-4">
-                            <span className="font-body text-sm text-brand-deep/70">
-                              {client.forfait ?? '—'}
-                            </span>
+                            <span className="font-body text-sm text-brand-deep/70">{client.forfait ?? '—'}</span>
                           </td>
                           <td className="px-4 py-4">
                             <span className="font-body text-sm font-medium text-brand-deep">S{client.week}</span>
@@ -157,10 +250,7 @@ export function CoachClients() {
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-2">
                               <div className="w-24 h-2 bg-brand-lavender rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-brand-violet rounded-full transition-all"
-                                  style={{ width: `${client.adherence}%` }}
-                                />
+                                <div className="h-full bg-brand-violet rounded-full transition-all" style={{ width: `${client.adherence}%` }} />
                               </div>
                               <span className="font-body text-xs text-brand-deep/60">{client.adherence}%</span>
                             </div>
@@ -172,18 +262,8 @@ export function CoachClients() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex gap-2">
-                              <button
-                                onClick={() => navigate(`/coach/workouts?client=${client.id}`)}
-                                className="font-body text-xs text-brand-violet hover:underline"
-                              >
-                                Programme
-                              </button>
-                              <button
-                                onClick={() => navigate(`/coach/messages?client=${client.id}`)}
-                                className="font-body text-xs text-brand-violet hover:underline"
-                              >
-                                Message
-                              </button>
+                              <button onClick={() => navigate(`/coach/workouts?client=${client.id}`)} className="font-body text-xs text-brand-violet hover:underline">Programme</button>
+                              <button onClick={() => navigate(`/coach/messages?client=${client.id}`)} className="font-body text-xs text-brand-violet hover:underline">Message</button>
                             </div>
                           </td>
                         </tr>
@@ -221,18 +301,8 @@ export function CoachClients() {
                         <span className="font-body text-xs text-brand-deep/60">{client.adherence}%</span>
                       </div>
                       <div className="flex gap-3">
-                        <button
-                          onClick={() => navigate(`/coach/workouts?client=${client.id}`)}
-                          className="font-body text-xs text-brand-violet font-medium"
-                        >
-                          Programme →
-                        </button>
-                        <button
-                          onClick={() => navigate(`/coach/messages?client=${client.id}`)}
-                          className="font-body text-xs text-brand-violet font-medium"
-                        >
-                          Message →
-                        </button>
+                        <button onClick={() => navigate(`/coach/workouts?client=${client.id}`)} className="font-body text-xs text-brand-violet font-medium">Programme →</button>
+                        <button onClick={() => navigate(`/coach/messages?client=${client.id}`)} className="font-body text-xs text-brand-violet font-medium">Message →</button>
                       </div>
                     </div>
                   )
