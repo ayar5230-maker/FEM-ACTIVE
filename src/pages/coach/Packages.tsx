@@ -116,6 +116,11 @@ export function CoachPackages() {
     setSaving(true)
     setError('')
     try {
+      // Verify session is alive
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('[save] session uid:', session?.user?.id ?? 'NONE')
+      if (!session) { setError('Session expirée — reconnecte-toi.'); setSaving(false); return }
+
       const payload = {
         coach_id: profile.id,
         name: form.name.trim(),
@@ -132,11 +137,22 @@ export function CoachPackages() {
         active: form.active,
         visible: form.visible,
       }
-      const { error: dbErr } = editingPkg
-        ? await supabase.from('packages').update(payload).eq('id', editingPkg.id)
-        : await supabase.from('packages').insert(payload)
 
-      if (dbErr) { setError(`Erreur : ${dbErr.message}`); setSaving(false); return }
+      console.log('[save] inserting payload:', payload)
+
+      // Race against 10s timeout
+      const op = editingPkg
+        ? supabase.from('packages').update(payload).eq('id', editingPkg.id)
+        : supabase.from('packages').insert(payload)
+
+      const timeout = new Promise<never>((_, rej) =>
+        setTimeout(() => rej(new Error('Timeout — Supabase ne répond pas.')), 10000))
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: dbErr } = await Promise.race([op, timeout]) as any
+
+      console.log('[save] result error:', dbErr)
+      if (dbErr) { setError(`Erreur DB : ${dbErr.message}`); setSaving(false); return }
       setShowModal(false)
       loadPackages()
     } catch (ex) {
@@ -233,7 +249,7 @@ export function CoachPackages() {
               {(['active', 'visible'] as const).map(field => (
                 <div key={field}>
                   <button onClick={() => toggleField(pkg, field)}
-                    className={`relative w-9 h-5 rounded-full transition-colors ${pkg[field] ? 'bg-brand-violet' : 'bg-gray-200'}`}>
+                    className={`relative w-9 h-5 rounded-full transition-colors overflow-hidden ${pkg[field] ? 'bg-brand-violet' : 'bg-gray-200'}`}>
                     <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${pkg[field] ? 'translate-x-4' : 'translate-x-0.5'}`} />
                   </button>
                 </div>
@@ -496,7 +512,7 @@ export function CoachPackages() {
                     {(['active', 'visible'] as const).map(field => (
                       <label key={field} className="flex items-center gap-2.5 cursor-pointer">
                         <button type="button" onClick={() => setForm(f => ({ ...f, [field]: !f[field] }))}
-                          className={`relative w-9 h-5 rounded-full transition-colors ${form[field] ? 'bg-brand-violet' : 'bg-gray-200'}`}>
+                          className={`relative w-9 h-5 rounded-full transition-colors overflow-hidden ${form[field] ? 'bg-brand-violet' : 'bg-gray-200'}`}>
                           <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${form[field] ? 'translate-x-4' : 'translate-x-0.5'}`} />
                         </button>
                         <span className="font-body text-sm text-gray-600">{field === 'active' ? 'Actif' : 'Visible'}</span>
