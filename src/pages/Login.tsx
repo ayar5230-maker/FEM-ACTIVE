@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuthContext } from '../contexts/AuthContext'
 import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
+import type { Profile } from '../lib/types'
 
 type Mode = 'login' | 'signup'
 
@@ -38,11 +39,13 @@ export function LoginPage() {
         return
       }
       // Directly fetch profile and navigate — don't rely on onAuthStateChange
-      const { data: prof, error: profErr } = await supabase
+      const { data: profData, error: profErr } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', data.user.id)
         .single()
+
+      const prof = profData as Profile | null
 
       if (profErr || !prof) {
         setError(`Erreur de profil : ${profErr?.message ?? 'introuvable'}`)

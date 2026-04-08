@@ -37,7 +37,7 @@ export function CoachDashboard() {
     if (!profile) return
     setLoading(true)
 
-    const [clientsRes, checkInsRes, messagesRes, exercisesRes] = await Promise.all([
+    const [clientsRes, checkInsRes, messagesRes, _exercisesRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('role', 'client').eq('coach_id', profile.id),
       supabase.from('check_ins').select('*, profile:profiles(*)').eq('status', 'pending'),
       supabase.from('messages').select('*', { count: 'exact', head: true }).eq('receiver_id', profile.id).eq('read', false),
