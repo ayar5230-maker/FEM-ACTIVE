@@ -13,6 +13,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    // supabase-js v2.50+ uses navigator.locks for cross-tab coordination.
+    // If another tab holds the lock it never releases, all auth calls hang forever.
+    // Replace with a no-op lock so auth always proceeds immediately.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    lock: (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => fn(),
   },
 })
 
