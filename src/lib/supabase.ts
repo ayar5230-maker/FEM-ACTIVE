@@ -1,24 +1,28 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './types'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables. Check your .env file.')
+  console.error('⚠️ Missing Supabase env vars. Check your .env file.')
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
+export const supabase = createClient<Database>(
+  supabaseUrl ?? 'https://placeholder.supabase.co',
+  supabaseAnonKey ?? 'placeholder',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
     },
-  },
-})
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
+    },
+  }
+)
 
 // Helper: get signed URL for a private storage file
 export async function getSignedUrl(path: string, expiresIn = 3600): Promise<string | null> {
