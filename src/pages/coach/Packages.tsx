@@ -79,24 +79,34 @@ export function CoachPackages() {
   async function savePackage() {
     if (!form.name.trim()) { setError('Le nom est requis.'); return }
     if (!form.price_cad || isNaN(Number(form.price_cad))) { setError('Le prix est requis.'); return }
+    if (!profile) { setError('Profil introuvable, reconnecte-toi.'); return }
     setSaving(true)
-    const payload = {
-      coach_id: profile!.id,
-      name: form.name.trim(),
-      description: form.description.trim() || null,
-      price_cad: Number(form.price_cad),
-      duration: form.duration,
-      active: form.active,
-      visible: form.visible,
-    }
-    if (editingPkg) {
-      await supabase.from('packages').update(payload).eq('id', editingPkg.id)
-    } else {
-      await supabase.from('packages').insert(payload)
+    setError('')
+    try {
+      const payload = {
+        coach_id: profile.id,
+        name: form.name.trim(),
+        description: form.description.trim() || null,
+        price_cad: Number(form.price_cad),
+        duration: form.duration,
+        active: form.active,
+        visible: form.visible,
+      }
+      const { error: dbErr } = editingPkg
+        ? await supabase.from('packages').update(payload).eq('id', editingPkg.id)
+        : await supabase.from('packages').insert(payload)
+
+      if (dbErr) {
+        setError(`Erreur : ${dbErr.message}`)
+        setSaving(false)
+        return
+      }
+      setShowModal(false)
+      loadPackages()
+    } catch (ex) {
+      setError(`Erreur inattendue : ${ex instanceof Error ? ex.message : String(ex)}`)
     }
     setSaving(false)
-    setShowModal(false)
-    loadPackages()
   }
 
   async function copyLink(pkg: Package) {
