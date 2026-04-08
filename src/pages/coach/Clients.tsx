@@ -242,7 +242,30 @@ export function CoachClients() {
                             </div>
                           </td>
                           <td className="px-4 py-4">
-                            <span className="font-body text-sm text-brand-deep/70">{client.forfait ?? '—'}</span>
+                            {forfaitMap[client.id] !== undefined ? (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="text"
+                                  value={forfaitMap[client.id]}
+                                  onChange={e => setForfaitMap(prev => ({ ...prev, [client.id]: e.target.value }))}
+                                  onBlur={async () => {
+                                    await supabase.from('profiles').update({ forfait: forfaitMap[client.id] || null }).eq('id', client.id)
+                                    addToast('Forfait mis à jour !', 'success')
+                                    setForfaitMap(prev => { const n = { ...prev }; delete n[client.id]; return n })
+                                    loadClients()
+                                  }}
+                                  autoFocus
+                                  className="w-32 px-2 py-1 rounded-lg border border-brand-violet font-body text-xs focus:outline-none"
+                                />
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setForfaitMap(prev => ({ ...prev, [client.id]: client.forfait ?? '' }))}
+                                className="font-body text-sm text-brand-deep/70 hover:text-brand-violet transition-colors text-left"
+                              >
+                                {client.forfait ?? <span className="text-brand-deep/30 italic">Cliquer pour ajouter</span>}
+                              </button>
+                            )}
                           </td>
                           <td className="px-4 py-4">
                             <span className="font-body text-sm font-medium text-brand-deep">S{client.week}</span>
