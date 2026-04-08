@@ -10,7 +10,7 @@ type Mode = 'login' | 'signup'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { profile, loading } = useAuthContext()
+  const { profile, loading, setProfile } = useAuthContext()
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -49,6 +49,8 @@ export function LoginPage() {
         setSubmitting(false)
         return
       }
+      // Set profile in context BEFORE navigating so AuthGuard doesn't bounce us back
+      setProfile(prof)
       navigate(prof.role === 'coach' ? '/coach' : '/client', { replace: true })
     } else {
       if (!fullName.trim()) {

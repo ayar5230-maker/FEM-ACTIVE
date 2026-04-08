@@ -5,6 +5,7 @@ import type { Profile } from '../lib/types'
 interface AuthState {
   profile: Profile | null
   loading: boolean
+  setProfile: (p: Profile | null) => void
 }
 
 export function useAuth(): AuthState {
@@ -65,5 +66,5 @@ export function useAuth(): AuthState {
     }
   }, [])
 
-  return { profile, loading }
+  return { profile, loading, setProfile }
 }
