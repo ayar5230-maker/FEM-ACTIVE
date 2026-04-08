@@ -1,27 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+// Fallback to known values if env vars aren't loading (anon key is safe to be public)
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL ||
+  'https://jkwpqvlcovrhnbcspuyy.supabase.co'
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('⚠️ Missing Supabase env vars. Check your .env file.')
-}
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imprd3Bxdmxjb3ZyaG5iY3NwdXl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1OTAwODIsImV4cCI6MjA5MTE2NjA4Mn0.jIjwlutIcarFpSMvng4B8xiqfxVOJJYsfo-g5_qLb2s'
 
-export const supabase = createClient(
-  supabaseUrl ?? 'https://placeholder.supabase.co',
-  supabaseAnonKey ?? 'placeholder',
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-    },
-    realtime: {
-      params: {
-        eventsPerSecond: 10,
-      },
-    },
-  }
-)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+})
 
 // Helper: get signed URL for a private storage file
 export async function getSignedUrl(path: string, expiresIn = 3600): Promise<string | null> {
