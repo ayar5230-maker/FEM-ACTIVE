@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signIn, signUp } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 import { useAuthContext } from '../contexts/AuthContext'
 import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
@@ -30,10 +31,25 @@ export function LoginPage() {
     setSubmitting(true)
 
     if (mode === 'login') {
-      const { error: err } = await signIn(email, password)
-      if (err) {
+      const { data, error: err } = await signIn(email, password)
+      if (err || !data.user) {
         setError('Email ou mot de passe incorrect.')
+        setSubmitting(false)
+        return
       }
+      // Directly fetch profile and navigate — don't rely on onAuthStateChange
+      const { data: prof, error: profErr } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
+
+      if (profErr || !prof) {
+        setError(`Erreur de profil : ${profErr?.message ?? 'introuvable'}`)
+        setSubmitting(false)
+        return
+      }
+      navigate(prof.role === 'coach' ? '/coach' : '/client', { replace: true })
     } else {
       if (!fullName.trim()) {
         setError('Le prénom est requis.')
