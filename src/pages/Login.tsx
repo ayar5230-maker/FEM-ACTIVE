@@ -31,8 +31,15 @@ export function LoginPage() {
     setError('')
     setSubmitting(true)
 
+    // 10-second timeout so the button never spins forever
+    const timer = setTimeout(() => {
+      setSubmitting(false)
+      setError('Connexion trop lente. Vérifie ta connexion internet ou que ton projet Supabase est actif (supabase.com/dashboard).')
+    }, 10000)
+
     if (mode === 'login') {
       const { data, error: err } = await signIn(email, password)
+      clearTimeout(timer)
       if (err || !data.user) {
         setError('Email ou mot de passe incorrect.')
         setSubmitting(false)
@@ -57,11 +64,13 @@ export function LoginPage() {
       navigate(prof.role === 'coach' ? '/coach' : '/client', { replace: true })
     } else {
       if (!fullName.trim()) {
+        clearTimeout(timer)
         setError('Le prénom est requis.')
         setSubmitting(false)
         return
       }
       const { error: err } = await signUp(email, password, fullName)
+      clearTimeout(timer)
       if (err) {
         setError(err.message)
       } else {
