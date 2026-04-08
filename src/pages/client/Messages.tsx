@@ -138,9 +138,9 @@ export function ClientMessages() {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="font-heading text-xl text-brand-deep/30">Aucun coach assigné</p>
+          <p className="font-heading text-xl text-brand-deep/30">No coach assigned</p>
           <p className="font-body text-sm text-brand-deep/30 mt-2">
-            Un coach te sera assigné bientôt 💜
+            A coach will be assigned to you soon 💜
           </p>
         </div>
       </div>
@@ -156,13 +156,13 @@ export function ClientMessages() {
         </div>
         <div>
           <p className="font-body font-semibold text-brand-deep">
-            {coachProfile?.full_name ?? 'Ton coach'}
+            {coachProfile?.full_name ?? 'Your coach'}
           </p>
-          <p className="font-body text-xs text-brand-deep/40">Fem'Active — Coaching premium</p>
+          <p className="font-body text-xs text-brand-deep/40">Fem'Active — Premium coaching</p>
         </div>
         <div className="ml-auto flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-green-400" />
-          <span className="font-body text-xs text-brand-deep/40">En ligne</span>
+          <span className="font-body text-xs text-brand-deep/40">Online</span>
         </div>
       </div>
 
@@ -172,9 +172,9 @@ export function ClientMessages() {
           <div className="flex justify-center py-8"><Spinner /></div>
         ) : messages.length === 0 ? (
           <div className="text-center py-12">
-            <p className="font-heading text-xl text-brand-deep/30">Commence la conversation 💜</p>
+            <p className="font-heading text-xl text-brand-deep/30">Start the conversation 💜</p>
             <p className="font-body text-sm text-brand-deep/30 mt-2">
-              Pose une question à ton coach ou partage ta progression
+              Ask your coach a question or share your progress
             </p>
           </div>
         ) : (
@@ -196,7 +196,7 @@ export function ClientMessages() {
                 >
                   <p className="leading-relaxed">{msg.body}</p>
                   <p className={`text-xs mt-1.5 ${isMe ? 'text-white/50' : 'text-brand-deep/40'}`}>
-                    {new Date(msg.created_at).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(msg.created_at).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })}
                     {!isMe && !msg.read && (
                       <span className="ml-2 inline-block w-1.5 h-1.5 rounded-full bg-brand-violet" />
                     )}
@@ -237,7 +237,7 @@ export function ClientMessages() {
             value={newMessage}
             onChange={e => setNewMessage(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-            placeholder="Écris un message à ton coach..."
+            placeholder="Write a message to your coach..."
             className="flex-1 px-4 py-2.5 rounded-xl border border-brand-lavender font-body text-sm text-brand-deep
               focus:outline-none focus:ring-2 focus:ring-brand-violet/30 focus:border-brand-violet"
           />
@@ -250,7 +250,7 @@ export function ClientMessages() {
           </Button>
         </div>
         <p className="font-body text-xs text-brand-deep/30 mt-2 text-center">
-          Réponse IA disponible 24/7 · Ton coach répondra en personne sous 24h
+          AI response available 24/7 · Your coach will reply in person within 24h
         </p>
       </div>
     </div>

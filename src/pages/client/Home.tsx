@@ -90,9 +90,9 @@ export function ClientHome() {
 
   const greeting = () => {
     const h = new Date().getHours()
-    if (h < 12) return 'Bonjour'
-    if (h < 18) return 'Bon après-midi'
-    return 'Bonsoir'
+    if (h < 12) return 'Good morning'
+    if (h < 18) return 'Good afternoon'
+    return 'Good evening'
   }
 
   const currentWeek = profile ? getCurrentWeek(profile.created_at) : 1
@@ -108,7 +108,7 @@ export function ClientHome() {
           {greeting()}, {profile?.full_name?.split(' ')[0] ?? 'toi'} 💜
         </h1>
         <p className="font-body text-brand-deep/50 mt-1">
-          Semaine {currentWeek} de ton programme · {new Date().toLocaleDateString('fr-CA', { weekday: 'long', month: 'long', day: 'numeric' })}
+          Week {currentWeek} of your program · {new Date().toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
       </div>
 
@@ -119,26 +119,26 @@ export function ClientHome() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <StatCard
-              label="Séances cette semaine"
+              label="Sessions this week"
               value={stats.sessionsThisWeek}
               icon="◎"
               accent
             />
             <StatCard
-              label="Adhérence"
+              label="Adherence"
               value={`${stats.adherencePct}%`}
               icon="◈"
             />
             <StatCard
-              label="Série active"
-              value={`${stats.streak}sem`}
-              sub="semaines consécutives"
+              label="Active streak"
+              value={`${stats.streak}wk`}
+              sub="consecutive weeks"
               icon="🔥"
             />
             <StatCard
-              label="Prochain check-in"
-              value={`${nextCheckInDays}j`}
-              sub="jours restants"
+              label="Next check-in"
+              value={`${nextCheckInDays}d`}
+              sub="days remaining"
               icon="◍"
             />
           </div>
@@ -147,22 +147,22 @@ export function ClientHome() {
             {/* Next workout */}
             <Card>
               <h2 className="font-heading text-lg font-semibold text-brand-deep mb-4">
-                Prochain entraînement
+                Next workout
               </h2>
               {!nextWorkout ? (
                 <div className="text-center py-6">
                   <p className="font-body text-sm text-brand-deep/40">
-                    Aucun programme pour cette semaine
+                    No program for this week
                   </p>
                   <p className="font-body text-xs text-brand-deep/30 mt-1">
-                    Ton coach t'assignera bientôt un programme
+                    Your coach will assign you a program soon
                   </p>
                 </div>
               ) : (
                 <>
                   <div className="mb-4">
                     <p className="font-body text-xs text-brand-violet font-medium">
-                      {nextWorkout.day_label ?? `Semaine ${nextWorkout.week}`}
+                      {nextWorkout.day_label ?? `Week ${nextWorkout.week}`}
                     </p>
                     <p className="font-heading text-xl font-semibold text-brand-deep mt-0.5">
                       {nextWorkout.title}
@@ -186,7 +186,7 @@ export function ClientHome() {
                       ))}
                       {nextWorkout.exercises.length > 4 && (
                         <p className="font-body text-xs text-brand-deep/40 pl-5">
-                          +{nextWorkout.exercises.length - 4} autres exercices
+                          +{nextWorkout.exercises.length - 4} more exercises
                         </p>
                       )}
                     </div>
@@ -196,7 +196,7 @@ export function ClientHome() {
                     className="w-full"
                     onClick={() => navigate('/client/workouts')}
                   >
-                    Commencer l'entraînement →
+                    Start workout →
                   </Button>
                 </>
               )}
@@ -206,25 +206,25 @@ export function ClientHome() {
             <Card>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-heading text-lg font-semibold text-brand-deep">
-                  Message de ton coach
+                  Message from your coach
                 </h2>
                 <button
                   onClick={() => navigate('/client/messages')}
                   className="font-body text-xs text-brand-violet hover:underline"
                 >
-                  Voir tout →
+                  See all →
                 </button>
               </div>
               {!latestMessage ? (
                 <div className="text-center py-6">
-                  <p className="font-body text-sm text-brand-deep/40">Aucun message pour le moment</p>
+                  <p className="font-body text-sm text-brand-deep/40">No messages yet</p>
                   <Button
                     variant="secondary"
                     size="sm"
                     className="mt-3"
                     onClick={() => navigate('/client/messages')}
                   >
-                    Écrire au coach
+                    Write to coach
                   </Button>
                 </div>
               ) : (
@@ -234,7 +234,7 @@ export function ClientHome() {
                       {latestMessage.body}
                     </p>
                     <p className="font-body text-xs text-brand-deep/40 mt-2">
-                      {new Date(latestMessage.created_at).toLocaleDateString('fr-CA', {
+                      {new Date(latestMessage.created_at).toLocaleDateString('en-CA', {
                         weekday: 'long', month: 'long', day: 'numeric'
                       })}
                     </p>
@@ -245,7 +245,7 @@ export function ClientHome() {
                     className="w-full"
                     onClick={() => navigate('/client/messages')}
                   >
-                    Répondre →
+                    Reply →
                   </Button>
                 </div>
               )}

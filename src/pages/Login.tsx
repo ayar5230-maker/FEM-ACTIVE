@@ -34,7 +34,7 @@ export function LoginPage() {
     // 10-second timeout so the button never spins forever
     const timer = setTimeout(() => {
       setSubmitting(false)
-      setError('Connexion trop lente. Vérifie ta connexion internet ou que ton projet Supabase est actif (supabase.com/dashboard).')
+      setError('Connection too slow. Check your internet connection or make sure your Supabase project is active (supabase.com/dashboard).')
     }, 10000)
 
     if (mode === 'login') {
@@ -45,7 +45,7 @@ export function LoginPage() {
         console.log('[Login] signIn result:', { user: data?.user?.id, err })
 
         if (err || !data.user) {
-          setError(`Email ou mot de passe incorrect. (${err?.message ?? 'no user'})`)
+          setError(`Incorrect email or password. (${err?.message ?? 'no user'})`)
           setSubmitting(false)
           return
         }
@@ -61,7 +61,7 @@ export function LoginPage() {
         const prof = profData as Profile | null
 
         if (profErr || !prof) {
-          setError(`Erreur de profil : ${profErr?.message ?? 'introuvable'}`)
+          setError(`Profile error: ${profErr?.message ?? 'not found'}`)
           setSubmitting(false)
           return
         }
@@ -71,13 +71,13 @@ export function LoginPage() {
         clearTimeout(timer)
         const msg = ex instanceof Error ? ex.message : String(ex)
         console.error('[Login] exception:', msg)
-        setError(`Erreur inattendue : ${msg}`)
+        setError(`Unexpected error: ${msg}`)
         setSubmitting(false)
       }
     } else {
       if (!fullName.trim()) {
         clearTimeout(timer)
-        setError('Le prénom est requis.')
+        setError('First name is required.')
         setSubmitting(false)
         return
       }
@@ -106,14 +106,14 @@ export function LoginPage() {
       <div className="hidden lg:flex flex-col justify-between w-1/2 bg-brand-deep px-16 py-12">
         <div>
           <h1 className="font-heading text-4xl italic font-semibold text-white">Fem'Active</h1>
-          <p className="font-body text-brand-lavender/60 mt-2 text-sm">Coaching féminin premium</p>
+          <p className="font-body text-brand-lavender/60 mt-2 text-sm">Premium women's coaching</p>
         </div>
         <div>
           <blockquote className="font-heading text-2xl italic text-white/90 leading-relaxed">
-            "Chaque séance est un pas de plus vers la meilleure version de toi."
+            "Every session is one more step toward your best self."
           </blockquote>
           <div className="mt-8 space-y-3">
-            {['Programme personnalisé', 'Suivi nutritionnel', 'Coach disponible', 'Résultats concrets'].map(f => (
+            {['Personalized program', 'Nutritional tracking', 'Coach available', 'Concrete results'].map(f => (
               <div key={f} className="flex items-center gap-3 text-brand-lavender/80 font-body text-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-brand-violet flex-shrink-0" />
                 {f}
@@ -130,7 +130,7 @@ export function LoginPage() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <h1 className="font-heading text-3xl italic font-semibold text-brand-deep">Fem'Active</h1>
-            <p className="font-body text-brand-deep/50 text-sm mt-1">Coaching féminin premium</p>
+            <p className="font-body text-brand-deep/50 text-sm mt-1">Premium women's coaching</p>
           </div>
 
           {signupSuccess ? (
@@ -138,28 +138,28 @@ export function LoginPage() {
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
                 <span className="text-2xl text-green-600">✓</span>
               </div>
-              <h2 className="font-heading text-2xl text-brand-deep">Compte créé !</h2>
+              <h2 className="font-heading text-2xl text-brand-deep">Account created!</h2>
               <p className="font-body text-brand-deep/60 text-sm">
-                Vérifie ton email pour confirmer ton compte, puis connecte-toi.
+                Check your email to confirm your account, then sign in.
               </p>
               <Button
                 variant="secondary"
                 className="w-full"
                 onClick={() => { setMode('login'); setSignupSuccess(false) }}
               >
-                Se connecter
+                Sign in
               </Button>
             </div>
           ) : (
             <>
               <div className="mb-8">
                 <h2 className="font-heading text-2xl font-semibold text-brand-deep">
-                  {mode === 'login' ? 'Bon retour 👋' : 'Créer un compte'}
+                  {mode === 'login' ? 'Welcome back 👋' : 'Create account'}
                 </h2>
                 <p className="font-body text-brand-deep/50 text-sm mt-1">
                   {mode === 'login'
-                    ? 'Connecte-toi à ton espace personnalisé'
-                    : 'Rejoins la communauté Fem\'Active'}
+                    ? 'Sign in to your personalized space'
+                    : "Join the Fem'Active community"}
                 </p>
               </div>
 
@@ -167,7 +167,7 @@ export function LoginPage() {
                 {mode === 'signup' && (
                   <div>
                     <label className="block font-body text-sm font-medium text-brand-deep mb-1.5">
-                      Prénom
+                      First name
                     </label>
                     <input
                       type="text"
@@ -202,7 +202,7 @@ export function LoginPage() {
 
                 <div>
                   <label className="block font-body text-sm font-medium text-brand-deep mb-1.5">
-                    Mot de passe
+                    Password
                   </label>
                   <input
                     type="password"
@@ -230,18 +230,18 @@ export function LoginPage() {
                   className="w-full"
                   size="lg"
                 >
-                  {mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
+                  {mode === 'login' ? 'Sign in' : 'Create my account'}
                 </Button>
               </form>
 
               <div className="mt-6 text-center">
                 <p className="font-body text-sm text-brand-deep/50">
-                  {mode === 'login' ? "Pas encore de compte ?" : 'Déjà un compte ?'}{' '}
+                  {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
                   <button
                     onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}
                     className="text-brand-violet font-medium hover:underline"
                   >
-                    {mode === 'login' ? "S'inscrire" : 'Se connecter'}
+                    {mode === 'login' ? 'Sign up' : 'Sign in'}
                   </button>
                 </p>
               </div>

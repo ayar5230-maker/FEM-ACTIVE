@@ -76,18 +76,18 @@ export function ClientCheckIn() {
       .single()
 
     if (error) {
-      addToast('Erreur lors de la soumission', 'error')
+      addToast('Error submitting check-in', 'error')
     } else {
       setCheckInId(data.id)
       setExistingCheckIn(data as CheckIn)
-      addToast('Check-in soumis avec succès ! 🎉', 'success')
+      addToast('Check-in submitted successfully! 🎉', 'success')
     }
     setSubmitting(false)
   }
 
   async function handlePhotoUpload(angle: PhotoAngle, file: File) {
     if (!profile || !checkInId) {
-      addToast('Soumets d\'abord ton check-in', 'error')
+      addToast('Submit your check-in first', 'error')
       return
     }
     setUploadingPhoto(angle)
@@ -100,7 +100,7 @@ export function ClientCheckIn() {
       .upload(path, file, { upsert: true })
 
     if (uploadError) {
-      addToast(`Erreur lors de l'upload de la photo ${angle}`, 'error')
+      addToast(`Error uploading ${angle} photo`, 'error')
       setUploadingPhoto(null)
       return
     }
@@ -119,7 +119,7 @@ export function ClientCheckIn() {
     })
 
     setUploaded(prev => ({ ...prev, [angle]: true }))
-    addToast(`Photo ${angle === 'front' ? 'face' : angle === 'side' ? 'côté' : 'dos'} ajoutée !`, 'success')
+    addToast(`${angle === 'front' ? 'Front' : angle === 'side' ? 'Side' : 'Back'} photo added!`, 'success')
     setUploadingPhoto(null)
   }
 
@@ -138,8 +138,8 @@ export function ClientCheckIn() {
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       <div className="mb-8">
-        <h1 className="font-heading text-3xl font-semibold text-brand-deep">Check-in hebdomadaire</h1>
-        <p className="font-body text-brand-deep/50 mt-1">Semaine {currentWeek} de ton programme</p>
+        <h1 className="font-heading text-3xl font-semibold text-brand-deep">Weekly check-in</h1>
+        <p className="font-body text-brand-deep/50 mt-1">Week {currentWeek} of your program</p>
       </div>
 
       {existingCheckIn ? (
@@ -151,11 +151,11 @@ export function ClientCheckIn() {
               </div>
               <div>
                 <h2 className="font-heading text-lg font-semibold text-brand-deep">
-                  Check-in soumis !
+                  Check-in submitted!
                 </h2>
                 <p className="font-body text-sm text-brand-deep/60 mt-1">
-                  Ton check-in de la semaine {currentWeek} a été soumis le{' '}
-                  {new Date(existingCheckIn.created_at).toLocaleDateString('fr-CA', {
+                  Your week {currentWeek} check-in was submitted on{' '}
+                  {new Date(existingCheckIn.created_at).toLocaleDateString('en-CA', {
                     weekday: 'long', month: 'long', day: 'numeric'
                   })}.
                 </p>
@@ -164,7 +164,7 @@ export function ClientCheckIn() {
                     ? 'bg-green-100 text-green-700'
                     : 'bg-amber-100 text-amber-700'
                 }`}>
-                  {existingCheckIn.status === 'reviewed' ? '✓ Révisé par le coach' : '⏳ En attente de révision'}
+                  {existingCheckIn.status === 'reviewed' ? '✓ Reviewed by coach' : '⏳ Awaiting review'}
                 </span>
               </div>
             </div>
@@ -172,7 +172,7 @@ export function ClientCheckIn() {
 
           {existingCheckIn.coach_feedback && (
             <Card className="border-brand-violet/20">
-              <p className="font-body text-xs font-medium text-brand-deep/50 mb-2">Retour de ton coach</p>
+              <p className="font-body text-xs font-medium text-brand-deep/50 mb-2">Coach feedback</p>
               <p className="font-body text-sm text-brand-deep leading-relaxed">
                 {existingCheckIn.coach_feedback}
               </p>
@@ -183,7 +183,7 @@ export function ClientCheckIn() {
           {checkInId && (
             <Card>
               <h3 className="font-heading text-base font-semibold text-brand-deep mb-4">
-                Photos progrès
+                Progress photos
               </h3>
               <div className="grid grid-cols-3 gap-3">
                 {(['front', 'side', 'back'] as PhotoAngle[]).map(angle => (
@@ -213,7 +213,7 @@ export function ClientCheckIn() {
                       <>
                         <span className="text-2xl">{uploaded[angle] ? '✓' : '+'}</span>
                         <span className="font-body text-xs text-brand-deep/50">
-                          {angle === 'front' ? 'Face' : angle === 'side' ? 'Côté' : 'Dos'}
+                          {angle === 'front' ? 'Front' : angle === 'side' ? 'Side' : 'Back'}
                         </span>
                       </>
                     )}
@@ -228,12 +228,12 @@ export function ClientCheckIn() {
           {/* Metrics */}
           <Card>
             <h2 className="font-heading text-lg font-semibold text-brand-deep mb-5">
-              Tes métriques
+              Your metrics
             </h2>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block font-body text-sm font-medium text-brand-deep mb-1.5">
-                  Poids (kg)
+                  Weight (kg)
                 </label>
                 <input
                   type="number"
@@ -248,7 +248,7 @@ export function ClientCheckIn() {
 
               <div>
                 <label className="block font-body text-sm font-medium text-brand-deep mb-1.5">
-                  Heures de sommeil
+                  Sleep hours
                 </label>
                 <input
                   type="number"
@@ -267,7 +267,7 @@ export function ClientCheckIn() {
             {/* Energy slider */}
             <div className="mt-4">
               <div className="flex justify-between font-body text-sm mb-2">
-                <span className="font-medium text-brand-deep">Niveau d'énergie</span>
+                <span className="font-medium text-brand-deep">Energy level</span>
                 <span className="font-bold text-brand-violet">{form.energy}/10</span>
               </div>
               <input
@@ -282,15 +282,15 @@ export function ClientCheckIn() {
                   [&::-webkit-slider-thumb]:bg-brand-violet [&::-webkit-slider-thumb]:cursor-pointer"
               />
               <div className="flex justify-between font-body text-xs text-brand-deep/40 mt-1">
-                <span>Épuisée</span>
-                <span>Au top</span>
+                <span>Exhausted</span>
+                <span>On top</span>
               </div>
             </div>
 
             {/* Sessions */}
             <div className="mt-4">
               <label className="block font-body text-sm font-medium text-brand-deep mb-2">
-                Séances complétées cette semaine
+                Sessions completed this week
               </label>
               <div className="flex gap-2">
                 {[0, 1, 2, 3, 4, 5, 6].map(n => (
@@ -314,13 +314,13 @@ export function ClientCheckIn() {
           {/* Note */}
           <Card>
             <label className="block font-body text-sm font-medium text-brand-deep mb-2">
-              Note personnelle (optionnel)
+              Personal note (optional)
             </label>
             <textarea
               value={form.client_note}
               onChange={e => setForm(f => ({ ...f, client_note: e.target.value }))}
               rows={4}
-              placeholder="Comment s'est passée ta semaine ? Des défis, des victoires à célébrer ?"
+              placeholder="How did your week go? Any challenges, victories to celebrate?"
               className="w-full px-4 py-3 rounded-xl border border-brand-lavender font-body text-sm
                 focus:outline-none focus:ring-2 focus:ring-brand-violet/30 resize-none"
             />
@@ -329,10 +329,10 @@ export function ClientCheckIn() {
           {/* Photos */}
           <Card>
             <h2 className="font-heading text-lg font-semibold text-brand-deep mb-2">
-              Photos progrès
+              Progress photos
             </h2>
             <p className="font-body text-xs text-brand-deep/50 mb-4">
-              Tu pourras ajouter tes photos après la soumission du check-in.
+              You can add your photos after submitting the check-in.
             </p>
             <div className="grid grid-cols-3 gap-3">
               {(['front', 'side', 'back'] as PhotoAngle[]).map(angle => (
@@ -343,7 +343,7 @@ export function ClientCheckIn() {
                 >
                   <span className="text-brand-deep/30 text-lg">📷</span>
                   <span className="font-body text-xs text-brand-deep/30">
-                    {angle === 'front' ? 'Face' : angle === 'side' ? 'Côté' : 'Dos'}
+                    {angle === 'front' ? 'Front' : angle === 'side' ? 'Side' : 'Back'}
                   </span>
                 </div>
               ))}
@@ -351,7 +351,7 @@ export function ClientCheckIn() {
           </Card>
 
           <Button type="submit" loading={submitting} className="w-full" size="lg">
-            Soumettre mon check-in
+            Submit my check-in
           </Button>
         </form>
       )}

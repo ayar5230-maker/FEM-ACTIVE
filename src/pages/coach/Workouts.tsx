@@ -75,7 +75,7 @@ export function CoachWorkouts() {
 
   async function handleSaveWorkout() {
     if (!profile || !selectedClientId) return
-    if (!form.title.trim()) { addToast('Le titre est requis', 'error'); return }
+    if (!form.title.trim()) { addToast('Title is required', 'error'); return }
     setSaving(true)
 
     const { data: workout, error: wErr } = await supabase
@@ -85,7 +85,7 @@ export function CoachWorkouts() {
       .single()
 
     if (wErr || !workout) {
-      addToast('Erreur lors de la création du workout', 'error')
+      addToast('Error creating workout', 'error')
       setSaving(false)
       return
     }
@@ -97,7 +97,7 @@ export function CoachWorkouts() {
       )
     }
 
-    addToast('Programme créé avec succès !', 'success')
+    addToast('Program created successfully!', 'success')
     setForm({ week: 1, day_label: '', title: '', coach_note: '' })
     setExercises([{ name: '', sets: 3, reps: '10', weight_kg: null, completed: false, order_index: 0 }])
     loadWorkouts(selectedClientId)
@@ -106,7 +106,7 @@ export function CoachWorkouts() {
 
   async function handleDeleteWorkout(id: string) {
     await supabase.from('workouts').delete().eq('id', id)
-    addToast('Workout supprimé', 'info')
+    addToast('Workout deleted', 'info')
     loadWorkouts(selectedClientId)
   }
 
@@ -130,20 +130,20 @@ export function CoachWorkouts() {
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       <div className="mb-8">
-        <h1 className="font-heading text-3xl font-semibold text-brand-deep">Entraînements</h1>
-        <p className="font-body text-brand-deep/50 mt-1">Assigne et suis les programmes</p>
+        <h1 className="font-heading text-3xl font-semibold text-brand-deep">Workouts</h1>
+        <p className="font-body text-brand-deep/50 mt-1">Assign and track programs</p>
       </div>
 
       {/* Client selector */}
       <div className="mb-6">
-        <label className="block font-body text-sm font-medium text-brand-deep mb-1.5">Cliente</label>
+        <label className="block font-body text-sm font-medium text-brand-deep mb-1.5">Client</label>
         <select
           value={selectedClientId}
           onChange={e => setSelectedClientId(e.target.value)}
           className="w-full max-w-xs px-4 py-2.5 rounded-xl border border-brand-lavender bg-white
             font-body text-sm text-brand-deep focus:outline-none focus:ring-2 focus:ring-brand-violet/30"
         >
-          <option value="">Sélectionner une cliente</option>
+          <option value="">Select a client</option>
           {clients.map(c => (
             <option key={c.id} value={c.id}>{c.full_name ?? c.email}</option>
           ))}
@@ -155,12 +155,12 @@ export function CoachWorkouts() {
           {/* Add workout form */}
           <Card>
             <h2 className="font-heading text-lg font-semibold text-brand-deep mb-5">
-              Nouveau programme
+              New program
             </h2>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-body text-xs font-medium text-brand-deep/60 mb-1">Semaine</label>
+                  <label className="block font-body text-xs font-medium text-brand-deep/60 mb-1">Week</label>
                   <input
                     type="number"
                     min={1}
@@ -170,40 +170,40 @@ export function CoachWorkouts() {
                   />
                 </div>
                 <div>
-                  <label className="block font-body text-xs font-medium text-brand-deep/60 mb-1">Jour</label>
+                  <label className="block font-body text-xs font-medium text-brand-deep/60 mb-1">Day</label>
                   <input
                     type="text"
                     value={form.day_label}
                     onChange={e => setForm(f => ({ ...f, day_label: e.target.value }))}
-                    placeholder="ex: Lundi"
+                    placeholder="e.g. Monday"
                     className="w-full px-3 py-2 rounded-xl border border-brand-lavender font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/30"
                   />
                 </div>
               </div>
               <div>
-                <label className="block font-body text-xs font-medium text-brand-deep/60 mb-1">Titre *</label>
+                <label className="block font-body text-xs font-medium text-brand-deep/60 mb-1">Title *</label>
                 <input
                   type="text"
                   value={form.title}
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  placeholder="ex: Push A — Poitrine & Épaules"
+                  placeholder="e.g. Push A — Chest & Shoulders"
                   className="w-full px-3 py-2 rounded-xl border border-brand-lavender font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/30"
                 />
               </div>
               <div>
-                <label className="block font-body text-xs font-medium text-brand-deep/60 mb-1">Note coach</label>
+                <label className="block font-body text-xs font-medium text-brand-deep/60 mb-1">Coach note</label>
                 <textarea
                   value={form.coach_note}
                   onChange={e => setForm(f => ({ ...f, coach_note: e.target.value }))}
                   rows={2}
-                  placeholder="Instructions supplémentaires..."
+                  placeholder="Additional instructions..."
                   className="w-full px-3 py-2 rounded-xl border border-brand-lavender font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/30 resize-none"
                 />
               </div>
 
               {/* Exercises */}
               <div>
-                <label className="block font-body text-xs font-medium text-brand-deep/60 mb-2">Exercices</label>
+                <label className="block font-body text-xs font-medium text-brand-deep/60 mb-2">Exercises</label>
                 <div className="space-y-2">
                   {exercises.map((ex, i) => (
                     <div key={i} className="grid grid-cols-12 gap-2 items-center">
@@ -215,7 +215,7 @@ export function CoachWorkouts() {
                           updated[i] = { ...updated[i], name: e.target.value }
                           setExercises(updated)
                         }}
-                        placeholder="Exercice"
+                        placeholder="Exercise"
                         className="col-span-5 px-3 py-2 rounded-xl border border-brand-lavender font-body text-xs focus:outline-none focus:ring-2 focus:ring-brand-violet/30"
                       />
                       <input
@@ -226,7 +226,7 @@ export function CoachWorkouts() {
                           updated[i] = { ...updated[i], sets: parseInt(e.target.value) || 1 }
                           setExercises(updated)
                         }}
-                        placeholder="Séries"
+                        placeholder="Sets"
                         className="col-span-2 px-2 py-2 rounded-xl border border-brand-lavender font-body text-xs text-center focus:outline-none focus:ring-2 focus:ring-brand-violet/30"
                       />
                       <input
@@ -262,7 +262,7 @@ export function CoachWorkouts() {
                   onClick={handleAddExercise}
                   className="mt-2 font-body text-xs text-brand-violet hover:underline"
                 >
-                  + Ajouter un exercice
+                  + Add exercise
                 </button>
               </div>
 
@@ -271,7 +271,7 @@ export function CoachWorkouts() {
                 loading={saving}
                 className="w-full"
               >
-                Enregistrer le programme
+                Save program
               </Button>
             </div>
           </Card>
@@ -288,7 +288,7 @@ export function CoachWorkouts() {
                     onChange={e => setSelectedExercise(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-brand-lavender font-body text-sm focus:outline-none"
                   >
-                    <option value="">Choisir un exercice</option>
+                    <option value="">Choose an exercise</option>
                     {exerciseNames.map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
                 </div>
@@ -300,14 +300,14 @@ export function CoachWorkouts() {
                       <YAxis tick={{ fontSize: 12, fontFamily: 'Outfit' }} unit=" kg" />
                       <Tooltip
                         contentStyle={{ fontFamily: 'Outfit', fontSize: 12, borderRadius: 12 }}
-                        formatter={(v: number) => [`${v} kg`, 'Poids']}
+                        formatter={(v: number) => [`${v} kg`, 'Weight']}
                       />
                       <Bar dataKey="weight" fill="#a855f7" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
                   <p className="font-body text-xs text-brand-deep/40 text-center py-4">
-                    Sélectionne un exercice pour voir la progression
+                    Select an exercise to see progression
                   </p>
                 )}
               </Card>
@@ -315,11 +315,11 @@ export function CoachWorkouts() {
 
             {/* Workouts list */}
             <Card>
-              <h2 className="font-heading text-lg font-semibold text-brand-deep mb-4">Programmes assignés</h2>
+              <h2 className="font-heading text-lg font-semibold text-brand-deep mb-4">Assigned programs</h2>
               {loading ? (
                 <div className="flex justify-center py-6"><Spinner /></div>
               ) : workouts.length === 0 ? (
-                <p className="font-body text-sm text-brand-deep/40 text-center py-4">Aucun programme assigné</p>
+                <p className="font-body text-sm text-brand-deep/40 text-center py-4">No programs assigned</p>
               ) : (
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
                   {workouts.map(w => (
@@ -327,7 +327,7 @@ export function CoachWorkouts() {
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <p className="font-body text-xs text-brand-violet font-medium">
-                            Semaine {w.week}{w.day_label ? ` · ${w.day_label}` : ''}
+                            Week {w.week}{w.day_label ? ` · ${w.day_label}` : ''}
                           </p>
                           <p className="font-body text-sm font-semibold text-brand-deep mt-0.5">{w.title}</p>
                         </div>
@@ -335,7 +335,7 @@ export function CoachWorkouts() {
                           onClick={() => handleDeleteWorkout(w.id)}
                           className="text-red-300 hover:text-red-500 text-xs font-body"
                         >
-                          Suppr.
+                          Delete
                         </button>
                       </div>
                       {w.exercises && w.exercises.length > 0 && (

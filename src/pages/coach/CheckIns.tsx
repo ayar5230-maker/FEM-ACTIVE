@@ -78,9 +78,9 @@ export function CoachCheckIns() {
       .eq('id', selected.id)
 
     if (error) {
-      addToast('Erreur lors de la sauvegarde', 'error')
+      addToast('Error saving', 'error')
     } else {
-      addToast('Check-in approuvé !', 'success')
+      addToast('Check-in approved!', 'success')
       loadCheckIns()
       setSelected(null)
     }
@@ -95,7 +95,7 @@ export function CoachCheckIns() {
 
       <div className="mb-8">
         <h1 className="font-heading text-3xl font-semibold text-brand-deep">Check-ins</h1>
-        <p className="font-body text-brand-deep/50 mt-1">Révise les bilans hebdomadaires</p>
+        <p className="font-body text-brand-deep/50 mt-1">Review weekly check-ins</p>
       </div>
 
       {/* Filter tabs */}
@@ -110,7 +110,7 @@ export function CoachCheckIns() {
                 : 'bg-brand-lavender/50 text-brand-deep/60 hover:bg-brand-lavender'
             }`}
           >
-            {f === 'pending' ? 'En attente' : f === 'reviewed' ? 'Révisés' : 'Tous'}
+            {f === 'pending' ? 'Pending' : f === 'reviewed' ? 'Reviewed' : 'All'}
             {f !== 'all' && (
               <span className="ml-2 text-xs opacity-70">
                 {checkIns.filter(ci => ci.status === f).length}
@@ -128,7 +128,7 @@ export function CoachCheckIns() {
           ) : filtered.length === 0 ? (
             <Card>
               <p className="font-body text-sm text-brand-deep/40 text-center py-6">
-                Aucun check-in {filter === 'pending' ? 'en attente' : filter === 'reviewed' ? 'révisé' : ''}
+                No {filter === 'pending' ? 'pending' : filter === 'reviewed' ? 'reviewed' : ''} check-ins
               </p>
             </Card>
           ) : (
@@ -145,18 +145,18 @@ export function CoachCheckIns() {
                 >
                   <div className="flex items-center justify-between mb-1">
                     <p className={`font-body text-sm font-medium ${selected?.id === ci.id ? 'text-white' : 'text-brand-deep'}`}>
-                      {(ci.profile as Profile | undefined)?.full_name ?? 'Cliente'}
+                      {(ci.profile as Profile | undefined)?.full_name ?? 'Client'}
                     </p>
                     <span className={`px-2 py-0.5 rounded-full font-body text-xs font-medium ${
                       ci.status === 'pending'
                         ? selected?.id === ci.id ? 'bg-amber-300 text-amber-900' : 'bg-amber-50 text-amber-700'
                         : selected?.id === ci.id ? 'bg-green-300 text-green-900' : 'bg-green-50 text-green-700'
                     }`}>
-                      {ci.status === 'pending' ? 'En attente' : 'Révisé'}
+                      {ci.status === 'pending' ? 'Pending' : 'Reviewed'}
                     </span>
                   </div>
                   <p className={`font-body text-xs ${selected?.id === ci.id ? 'text-white/60' : 'text-brand-deep/50'}`}>
-                    Semaine {ci.week} · {ci.weight_kg ? `${ci.weight_kg} kg` : '—'}
+                    Week {ci.week} · {ci.weight_kg ? `${ci.weight_kg} kg` : '—'}
                   </p>
                 </button>
               ))}
@@ -169,7 +169,7 @@ export function CoachCheckIns() {
           {!selected ? (
             <Card>
               <div className="text-center py-12">
-                <p className="font-body text-brand-deep/30">Sélectionne un check-in pour le réviser</p>
+                <p className="font-body text-brand-deep/30">Select a check-in to review</p>
               </div>
             </Card>
           ) : (
@@ -179,23 +179,23 @@ export function CoachCheckIns() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="font-heading text-xl font-semibold text-brand-deep">
-                      {(selected.profile as Profile | undefined)?.full_name ?? 'Cliente'}
+                      {(selected.profile as Profile | undefined)?.full_name ?? 'Client'}
                     </h3>
-                    <p className="font-body text-sm text-brand-deep/50">Semaine {selected.week}</p>
+                    <p className="font-body text-sm text-brand-deep/50">Week {selected.week}</p>
                   </div>
                   <span className={`px-3 py-1 rounded-full font-body text-sm font-medium ${
                     selected.status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'
                   }`}>
-                    {selected.status === 'pending' ? 'En attente' : 'Révisé'}
+                    {selected.status === 'pending' ? 'Pending' : 'Reviewed'}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   {[
-                    { label: 'Poids', value: selected.weight_kg ? `${selected.weight_kg} kg` : '—' },
-                    { label: 'Énergie', value: selected.energy ? `${selected.energy}/10` : '—' },
-                    { label: 'Sommeil', value: selected.sleep_hours ? `${selected.sleep_hours}h` : '—' },
-                    { label: 'Séances', value: `${selected.sessions_done}/${selected.sessions_total}` },
+                    { label: 'Weight', value: selected.weight_kg ? `${selected.weight_kg} kg` : '—' },
+                    { label: 'Energy', value: selected.energy ? `${selected.energy}/10` : '—' },
+                    { label: 'Sleep', value: selected.sleep_hours ? `${selected.sleep_hours}h` : '—' },
+                    { label: 'Sessions', value: `${selected.sessions_done}/${selected.sessions_total}` },
                   ].map(s => (
                     <div key={s.label} className="bg-brand-lavender/40 rounded-xl p-3 text-center">
                       <p className="font-body text-xs text-brand-deep/50">{s.label}</p>
@@ -206,7 +206,7 @@ export function CoachCheckIns() {
 
                 {selected.client_note && (
                   <div className="bg-brand-lavender/30 rounded-xl p-3 mb-4">
-                    <p className="font-body text-xs font-medium text-brand-deep/60 mb-1">Note de la cliente</p>
+                    <p className="font-body text-xs font-medium text-brand-deep/60 mb-1">Client note</p>
                     <p className="font-body text-sm text-brand-deep">{selected.client_note}</p>
                   </div>
                 )}
@@ -215,7 +215,7 @@ export function CoachCheckIns() {
               {/* Photos */}
               {selected.photoUrls && Object.keys(selected.photoUrls).length > 0 && (
                 <Card>
-                  <h3 className="font-heading text-base font-semibold text-brand-deep mb-3">Photos progrès</h3>
+                  <h3 className="font-heading text-base font-semibold text-brand-deep mb-3">Progress photos</h3>
                   <div className="grid grid-cols-3 gap-3">
                     {(['front', 'side', 'back'] as const).map(angle => (
                       <div key={angle} className="aspect-[3/4] rounded-xl overflow-hidden bg-brand-lavender/40 flex items-center justify-center">
@@ -227,7 +227,7 @@ export function CoachCheckIns() {
                           />
                         ) : (
                           <span className="font-body text-xs text-brand-deep/30">
-                            {angle === 'front' ? 'Face' : angle === 'side' ? 'Côté' : 'Dos'}
+                            {angle === 'front' ? 'Front' : angle === 'side' ? 'Side' : 'Back'}
                           </span>
                         )}
                       </div>
@@ -239,7 +239,7 @@ export function CoachCheckIns() {
               {/* Weight progression */}
               {weightData.length > 1 && (
                 <Card>
-                  <h3 className="font-heading text-base font-semibold text-brand-deep mb-3">Progression du poids</h3>
+                  <h3 className="font-heading text-base font-semibold text-brand-deep mb-3">Weight progression</h3>
                   <ResponsiveContainer width="100%" height={160}>
                     <LineChart data={weightData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f5f0ff" />
@@ -247,8 +247,8 @@ export function CoachCheckIns() {
                       <YAxis tick={{ fontSize: 11, fontFamily: 'Outfit' }} domain={['dataMin - 1', 'dataMax + 1']} unit=" kg" />
                       <Tooltip
                         contentStyle={{ fontFamily: 'Outfit', fontSize: 12, borderRadius: 12 }}
-                        formatter={(v: number) => [`${v} kg`, 'Poids']}
-                        labelFormatter={v => `Semaine ${v}`}
+                        formatter={(v: number) => [`${v} kg`, 'Weight']}
+                        labelFormatter={v => `Week ${v}`}
                       />
                       <Line type="monotone" dataKey="weight" stroke="#a855f7" strokeWidth={2} dot={{ fill: '#a855f7', r: 4 }} />
                     </LineChart>
@@ -258,12 +258,12 @@ export function CoachCheckIns() {
 
               {/* Feedback */}
               <Card>
-                <h3 className="font-heading text-base font-semibold text-brand-deep mb-3">Retour coach</h3>
+                <h3 className="font-heading text-base font-semibold text-brand-deep mb-3">Coach feedback</h3>
                 <textarea
                   value={feedback}
                   onChange={e => setFeedback(e.target.value)}
                   rows={4}
-                  placeholder="Bravo pour cette semaine ! Voici mes observations..."
+                  placeholder="Great work this week! Here are my observations..."
                   disabled={selected.status === 'reviewed'}
                   className="w-full px-4 py-3 rounded-xl border border-brand-lavender font-body text-sm text-brand-deep
                     focus:outline-none focus:ring-2 focus:ring-brand-violet/30 resize-none
@@ -275,7 +275,7 @@ export function CoachCheckIns() {
                     loading={saving}
                     className="w-full mt-3"
                   >
-                    Approuver le check-in
+                    Approve check-in
                   </Button>
                 )}
               </Card>

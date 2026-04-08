@@ -76,9 +76,9 @@ export function CoachNutrition() {
       .upsert(payload, { onConflict: 'client_id' })
 
     if (error) {
-      addToast('Erreur lors de la sauvegarde', 'error')
+      addToast('Error saving', 'error')
     } else {
-      addToast('Objectifs nutritionnels enregistrés !', 'success')
+      addToast('Nutritional goals saved!', 'success')
       loadNutrition(selectedClientId)
     }
     setSaving(false)
@@ -96,19 +96,19 @@ export function CoachNutrition() {
 
       <div className="mb-8">
         <h1 className="font-heading text-3xl font-semibold text-brand-deep">Nutrition</h1>
-        <p className="font-body text-brand-deep/50 mt-1">Définis les objectifs macros de tes clientes</p>
+        <p className="font-body text-brand-deep/50 mt-1">Set macro goals for your clients</p>
       </div>
 
       {/* Client selector */}
       <div className="mb-6">
-        <label className="block font-body text-sm font-medium text-brand-deep mb-1.5">Cliente</label>
+        <label className="block font-body text-sm font-medium text-brand-deep mb-1.5">Client</label>
         <select
           value={selectedClientId}
           onChange={e => setSelectedClientId(e.target.value)}
           className="w-full max-w-xs px-4 py-2.5 rounded-xl border border-brand-lavender bg-white
             font-body text-sm text-brand-deep focus:outline-none focus:ring-2 focus:ring-brand-violet/30"
         >
-          <option value="">Sélectionner une cliente</option>
+          <option value="">Select a client</option>
           {clients.map(c => (
             <option key={c.id} value={c.id}>{c.full_name ?? c.email}</option>
           ))}
@@ -123,12 +123,12 @@ export function CoachNutrition() {
             {/* Form */}
             <Card>
               <h2 className="font-heading text-lg font-semibold text-brand-deep mb-5">
-                Objectifs nutritionnels
+                Nutritional goals
               </h2>
               <div className="space-y-4">
                 <div>
                   <label className="block font-body text-xs font-medium text-brand-deep/60 mb-1">
-                    Calories totales
+                    Total calories
                   </label>
                   <div className="flex items-center gap-3">
                     <input
@@ -144,7 +144,7 @@ export function CoachNutrition() {
                 {(['protein_g', 'carbs_g', 'fat_g'] as const).map(macro => (
                   <div key={macro}>
                     <label className="block font-body text-xs font-medium text-brand-deep/60 mb-1">
-                      {macro === 'protein_g' ? 'Protéines' : macro === 'carbs_g' ? 'Glucides' : 'Lipides'}
+                      {macro === 'protein_g' ? 'Protein' : macro === 'carbs_g' ? 'Carbs' : 'Fat'}
                     </label>
                     <div className="flex items-center gap-3">
                       <input
@@ -160,45 +160,45 @@ export function CoachNutrition() {
 
                 <div>
                   <label className="block font-body text-xs font-medium text-brand-deep/60 mb-1">
-                    Note coach
+                    Coach note
                   </label>
                   <textarea
                     value={form.coach_note}
                     onChange={e => setForm(f => ({ ...f, coach_note: e.target.value }))}
                     rows={3}
-                    placeholder="Conseils personnalisés, timing des repas..."
+                    placeholder="Personalized advice, meal timing..."
                     className="w-full px-3 py-2 rounded-xl border border-brand-lavender font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/30 resize-none"
                   />
                 </div>
 
                 {nutrition && (
                   <p className="font-body text-xs text-brand-deep/40">
-                    Dernière mise à jour : {new Date(nutrition.updated_at).toLocaleDateString('fr-CA')}
+                    Last updated: {new Date(nutrition.updated_at).toLocaleDateString('en-CA')}
                   </p>
                 )}
 
                 <Button onClick={handleSave} loading={saving} className="w-full">
-                  {nutrition ? 'Mettre à jour' : 'Enregistrer'}
+                  {nutrition ? 'Update' : 'Save'}
                 </Button>
               </div>
             </Card>
 
             {/* Visual preview */}
             <Card>
-              <h2 className="font-heading text-lg font-semibold text-brand-deep mb-5">Aperçu</h2>
+              <h2 className="font-heading text-lg font-semibold text-brand-deep mb-5">Overview</h2>
 
               {/* Calorie display */}
               <div className="text-center mb-6">
                 <p className="font-heading text-5xl font-bold text-brand-deep">{form.calories}</p>
-                <p className="font-body text-sm text-brand-deep/50 mt-1">kcal / jour</p>
+                <p className="font-body text-sm text-brand-deep/50 mt-1">kcal / day</p>
               </div>
 
               {/* Macro bars */}
               <div className="space-y-4">
                 {[
-                  { label: 'Protéines', value: form.protein_g, pct: proteinPct, color: 'bg-brand-violet' },
-                  { label: 'Glucides', value: form.carbs_g, pct: carbsPct, color: 'bg-brand-violet-light' },
-                  { label: 'Lipides', value: form.fat_g, pct: fatPct, color: 'bg-purple-300' },
+                  { label: 'Protein', value: form.protein_g, pct: proteinPct, color: 'bg-brand-violet' },
+                  { label: 'Carbs', value: form.carbs_g, pct: carbsPct, color: 'bg-brand-violet-light' },
+                  { label: 'Fat', value: form.fat_g, pct: fatPct, color: 'bg-purple-300' },
                 ].map(m => (
                   <div key={m.label}>
                     <div className="flex justify-between font-body text-sm mb-1.5">
@@ -217,7 +217,7 @@ export function CoachNutrition() {
 
               {form.coach_note && (
                 <div className="mt-6 bg-brand-lavender/50 rounded-xl p-4">
-                  <p className="font-body text-xs font-medium text-brand-deep/60 mb-1">Note coach</p>
+                  <p className="font-body text-xs font-medium text-brand-deep/60 mb-1">Coach note</p>
                   <p className="font-body text-sm text-brand-deep">{form.coach_note}</p>
                 </div>
               )}

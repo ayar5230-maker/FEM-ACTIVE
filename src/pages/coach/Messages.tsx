@@ -121,7 +121,7 @@ export function CoachMessages() {
           <div className="flex justify-center py-6"><Spinner /></div>
         ) : clients.length === 0 ? (
           <p className="font-body text-sm text-brand-deep/40 text-center py-6 px-4">
-            Aucune cliente pour le moment
+            No clients yet
           </p>
         ) : (
           <div className="overflow-y-auto flex-1">
@@ -143,7 +143,7 @@ export function CoachMessages() {
                     {client.full_name ?? client.email}
                   </p>
                   <p className="font-body text-xs text-brand-deep/40 truncate">
-                    {client.forfait ?? 'Cliente'}
+                    {client.forfait ?? 'Client'}
                   </p>
                 </div>
               </button>
@@ -156,7 +156,7 @@ export function CoachMessages() {
       <div className="flex-1 flex flex-col">
         {!selectedClient ? (
           <div className="flex-1 flex items-center justify-center">
-            <p className="font-body text-brand-deep/30">Sélectionne une cliente pour voir la conversation</p>
+            <p className="font-body text-brand-deep/30">Select a client to view the conversation</p>
           </div>
         ) : (
           <>
@@ -167,7 +167,7 @@ export function CoachMessages() {
               </div>
               <div>
                 <p className="font-body font-medium text-brand-deep">{selectedClient.full_name ?? selectedClient.email}</p>
-                <p className="font-body text-xs text-brand-deep/40">{selectedClient.forfait ?? 'Cliente'}</p>
+                <p className="font-body text-xs text-brand-deep/40">{selectedClient.forfait ?? 'Client'}</p>
               </div>
             </div>
 
@@ -177,7 +177,7 @@ export function CoachMessages() {
                 <div className="flex justify-center py-8"><Spinner /></div>
               ) : messages.length === 0 ? (
                 <p className="text-center font-body text-sm text-brand-deep/30">
-                  Commence la conversation ✨
+                  Start the conversation ✨
                 </p>
               ) : (
                 messages.map(msg => {
@@ -193,7 +193,7 @@ export function CoachMessages() {
                       >
                         <p>{msg.body}</p>
                         <p className={`text-xs mt-1 ${isMe ? 'text-white/50' : 'text-brand-deep/40'}`}>
-                          {new Date(msg.created_at).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(msg.created_at).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>
@@ -211,7 +211,7 @@ export function CoachMessages() {
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-                  placeholder="Écris ton message..."
+                  placeholder="Write your message..."
                   className="flex-1 px-4 py-2.5 rounded-xl border border-brand-lavender font-body text-sm text-brand-deep
                     focus:outline-none focus:ring-2 focus:ring-brand-violet/30 focus:border-brand-violet"
                 />

@@ -1,9 +1,28 @@
 import { useState, useEffect } from 'react'
-import { Plus, MoreHorizontal, CreditCard, Pencil, Trash2, X, Link, Eye, Check, Info } from 'lucide-react'
+import { Plus, MoreHorizontal, CreditCard, Pencil, Trash2, X, Link, Eye, Check, Info, Tag } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { Button } from '../../components/ui/Button'
 import { Spinner } from '../../components/ui/Spinner'
+
+interface Coupon {
+  id: string
+  coach_id: string
+  code: string
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  expiry_date: string | null
+  max_uses: number | null
+  uses_count: number
+  active: boolean
+  created_at: string
+}
+
+const emptyCouponForm = {
+  code: '', discount_type: 'percentage' as 'percentage' | 'fixed',
+  discount_value: '', expiry_date: '', max_uses: '',
+  active: true,
+}
 
 interface Package {
   id: string
@@ -44,6 +63,9 @@ const STEPS = ['Setup', 'Automations', 'Benefits']
 
 export function CoachPackages() {
   const { profile } = useAuthContext()
+  const [activeTab, setActiveTab] = useState<'packages' | 'coupons'>('packages')
+
+  // Packages state
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -56,17 +78,90 @@ export function CoachPackages() {
   const [copied, setCopied] = useState<string | null>(null)
   const [error, setError] = useState('')
 
-  useEffect(() => { loadPackages() }, [profile])
+  // Coupons state
+  const [coupons, setCoupons] = useState<Coupon[]>([])
+  const [couponsLoading, setCouponsLoading] = useState(true)
+  const [showCouponModal, setShowCouponModal] = useState(false)
+  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null)
+  const [couponForm, setCouponForm] = useState(emptyCouponForm)
+  const [savingCoupon, setSavingCoupon] = useState(false)
+  const [couponError, setCouponError] = useState('')
+
+  useEffect(() => { loadPackages(); loadCoupons() }, [profile])
 
   async function loadPackages() {
     if (!profile) return
     const { data } = await supabase
-      .from('packages')
-      .select('*')
-      .eq('coach_id', profile.id)
-      .order('created_at', { ascending: false })
+      .from('packages').select('*').eq('coach_id', profile.id).order('created_at', { ascending: false })
     setPackages((data as Package[]) ?? [])
     setLoading(false)
+  }
+
+  async function loadCoupons() {
+    if (!profile) return
+    const { data } = await supabase
+      .from('coupons').select('*').eq('coach_id', profile.id).order('created_at', { ascending: false })
+    setCoupons((data as Coupon[]) ?? [])
+    setCouponsLoading(false)
+  }
+
+  function openAddCoupon() {
+    setEditingCoupon(null)
+    setCouponForm(emptyCouponForm)
+    setCouponError('')
+    setShowCouponModal(true)
+  }
+
+  function openEditCoupon(c: Coupon) {
+    setEditingCoupon(c)
+    setCouponForm({
+      code: c.code,
+      discount_type: c.discount_type,
+      discount_value: String(c.discount_value),
+      expiry_date: c.expiry_date ?? '',
+      max_uses: c.max_uses != null ? String(c.max_uses) : '',
+      active: c.active,
+    })
+    setCouponError('')
+    setShowCouponModal(true)
+  }
+
+  async function saveCoupon() {
+    if (!profile) return
+    if (!couponForm.code.trim()) { setCouponError('Coupon code is required.'); return }
+    if (!couponForm.discount_value || isNaN(Number(couponForm.discount_value))) { setCouponError('Discount value is required.'); return }
+    setSavingCoupon(true)
+    setCouponError('')
+    try {
+      const payload = {
+        coach_id: profile.id,
+        code: couponForm.code.trim().toUpperCase(),
+        discount_type: couponForm.discount_type,
+        discount_value: Number(couponForm.discount_value),
+        expiry_date: couponForm.expiry_date || null,
+        max_uses: couponForm.max_uses ? Number(couponForm.max_uses) : null,
+        active: couponForm.active,
+      }
+      const { error: dbErr } = editingCoupon
+        ? await supabase.from('coupons').update(payload).eq('id', editingCoupon.id)
+        : await supabase.from('coupons').insert(payload)
+      if (dbErr) { setCouponError(`Error: ${dbErr.message}`); setSavingCoupon(false); return }
+      setShowCouponModal(false)
+      loadCoupons()
+    } catch (ex) {
+      setCouponError(`Error: ${ex instanceof Error ? ex.message : String(ex)}`)
+    }
+    setSavingCoupon(false)
+  }
+
+  async function deleteCoupon(id: string) {
+    await supabase.from('coupons').delete().eq('id', id)
+    loadCoupons()
+  }
+
+  async function toggleCoupon(c: Coupon) {
+    await supabase.from('coupons').update({ active: !c.active }).eq('id', c.id)
+    setCoupons(prev => prev.map(x => x.id === c.id ? { ...x, active: !x.active } : x))
   }
 
   function openAdd() {
@@ -101,9 +196,9 @@ export function CoachPackages() {
 
   function nextStep() {
     if (step === 1) {
-      if (!form.name.trim()) { setError('Le nom du forfait est requis.'); return }
-      if (!form.description.trim()) { setError('La description est requise.'); return }
-      if (!form.price_cad || isNaN(Number(form.price_cad))) { setError('Le prix est requis.'); return }
+      if (!form.name.trim()) { setError('Package name is required.'); return }
+      if (!form.description.trim()) { setError('Description is required.'); return }
+      if (!form.price_cad || isNaN(Number(form.price_cad))) { setError('Price is required.'); return }
     }
     setError('')
     setStep(s => Math.min(s + 1, 3))
@@ -112,14 +207,14 @@ export function CoachPackages() {
   function prevStep() { setError(''); setStep(s => Math.max(s - 1, 1)) }
 
   async function savePackage() {
-    if (!profile) { setError('Profil introuvable, reconnecte-toi.'); return }
+    if (!profile) { setError('Profile not found, please sign in again.'); return }
     setSaving(true)
     setError('')
     try {
       // Verify session is alive
       const { data: { session } } = await supabase.auth.getSession()
       console.log('[save] session uid:', session?.user?.id ?? 'NONE')
-      if (!session) { setError('Session expirée — reconnecte-toi.'); setSaving(false); return }
+      if (!session) { setError('Session expired — please sign in again.'); setSaving(false); return }
 
       const payload = {
         coach_id: profile.id,
@@ -146,17 +241,17 @@ export function CoachPackages() {
         : supabase.from('packages').insert(payload)
 
       const timeout = new Promise<never>((_, rej) =>
-        setTimeout(() => rej(new Error('Timeout — Supabase ne répond pas.')), 10000))
+        setTimeout(() => rej(new Error('Timeout — Supabase is not responding.')), 10000))
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: dbErr } = await Promise.race([op, timeout]) as any
 
       console.log('[save] result error:', dbErr)
-      if (dbErr) { setError(`Erreur DB : ${dbErr.message}`); setSaving(false); return }
+      if (dbErr) { setError(`DB error: ${dbErr.message}`); setSaving(false); return }
       setShowModal(false)
       loadPackages()
     } catch (ex) {
-      setError(`Erreur : ${ex instanceof Error ? ex.message : String(ex)}`)
+      setError(`Error: ${ex instanceof Error ? ex.message : String(ex)}`)
     }
     setSaving(false)
   }
@@ -192,41 +287,183 @@ export function CoachPackages() {
     setForm(f => ({ ...f, benefits: f.benefits.filter((_, i) => i !== idx) }))
   }
 
-  const recurringLabel = form.plan_type === 'Monthly' ? '/mois' :
-    form.plan_type === 'Weekly' ? '/sem' :
-    form.plan_type === 'Yearly' ? '/an' : ''
+  const recurringLabel = form.plan_type === 'Monthly' ? '/mo' :
+    form.plan_type === 'Weekly' ? '/wk' :
+    form.plan_type === 'Yearly' ? '/yr' : ''
 
   return (
     <div className="p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-body text-xl font-semibold text-gray-900">Forfaits</h1>
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="font-body text-xl font-semibold text-gray-900">Packages</h1>
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 font-body text-sm text-gray-500 hover:bg-gray-50 transition-colors">
             <CreditCard size={14} strokeWidth={1.8} /> Stripe
           </button>
-          <Button onClick={openAdd}>
-            <Plus size={14} strokeWidth={2} /> Ajouter un forfait
-          </Button>
+          {activeTab === 'packages'
+            ? <Button onClick={openAdd}><Plus size={14} strokeWidth={2} /> Add Package</Button>
+            : <Button onClick={openAddCoupon}><Plus size={14} strokeWidth={2} /> Add Coupon</Button>
+          }
         </div>
       </div>
 
+      {/* Tab switcher */}
+      <div className="flex gap-1 mb-6 border-b border-gray-200">
+        {([['packages', 'Packages', CreditCard], ['coupons', 'Coupons', Tag]] as const).map(([id, label, Icon]) => (
+          <button key={id} onClick={() => setActiveTab(id)}
+            className={`flex items-center gap-1.5 px-4 py-2.5 font-body text-sm font-medium border-b-2 -mb-px transition-colors
+              ${activeTab === id ? 'border-brand-violet text-brand-violet' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            <Icon size={14} strokeWidth={1.8} />{label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── COUPONS TAB ── */}
+      {activeTab === 'coupons' && (
+        <div>
+          {couponsLoading ? (
+            <div className="flex justify-center py-24"><Spinner /></div>
+          ) : coupons.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+              <Tag size={28} className="mx-auto text-gray-200 mb-3" strokeWidth={1.5} />
+              <p className="font-body text-sm font-medium text-gray-500">No coupons yet</p>
+              <p className="font-body text-xs text-gray-300 mt-1">Create discount codes for your clients</p>
+              <button onClick={openAddCoupon} className="mt-4 px-4 py-2 rounded-lg bg-brand-violet text-white font-body text-sm font-medium hover:bg-brand-violet/90">
+                + Add Coupon
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="grid grid-cols-[1fr_120px_120px_100px_80px_80px] items-center px-5 py-3 border-b border-gray-100 bg-gray-50">
+                {['Code', 'Discount', 'Expiry', 'Uses', 'Active', ''].map(h => (
+                  <div key={h} className="font-body text-xs font-medium text-gray-400">{h}</div>
+                ))}
+              </div>
+              {coupons.map(c => (
+                <div key={c.id} className="grid grid-cols-[1fr_120px_120px_100px_80px_80px] items-center px-5 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-md bg-gray-900 text-white font-mono text-xs font-bold tracking-widest">{c.code}</span>
+                  </div>
+                  <div>
+                    <span className="px-2 py-0.5 rounded-md bg-green-50 text-green-700 font-body text-sm font-medium">
+                      {c.discount_type === 'percentage' ? `${c.discount_value}%` : `$${c.discount_value}`} off
+                    </span>
+                  </div>
+                  <div className="font-body text-xs text-gray-500">
+                    {c.expiry_date ? new Date(c.expiry_date).toLocaleDateString('en-CA') : 'No expiry'}
+                  </div>
+                  <div className="font-body text-xs text-gray-500">
+                    {c.uses_count}{c.max_uses ? ` / ${c.max_uses}` : ''}
+                  </div>
+                  <div>
+                    <button onClick={() => toggleCoupon(c)}
+                      className={`relative w-9 h-5 rounded-full overflow-hidden transition-colors ${c.active ? 'bg-brand-violet' : 'bg-gray-200'}`}>
+                      <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${c.active ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-center gap-1">
+                    <button onClick={() => openEditCoupon(c)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><Pencil size={13} /></button>
+                    <button onClick={() => deleteCoupon(c.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500"><Trash2 size={13} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add/Edit Coupon Modal */}
+          {showCouponModal && (
+            <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-heading text-lg font-semibold text-gray-900">
+                    {editingCoupon ? 'Edit Coupon' : 'New Coupon'}
+                  </h2>
+                  <button onClick={() => setShowCouponModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={16} /></button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block font-body text-xs font-medium text-gray-600 mb-1.5">Coupon Code *</label>
+                    <input type="text" value={couponForm.code}
+                      onChange={e => setCouponForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                      placeholder="SUMMER20"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 font-mono text-sm uppercase focus:outline-none focus:ring-2 focus:ring-brand-violet/20" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-body text-xs font-medium text-gray-600 mb-1.5">Discount Type</label>
+                      <select value={couponForm.discount_type}
+                        onChange={e => setCouponForm(f => ({ ...f, discount_type: e.target.value as 'percentage' | 'fixed' }))}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 font-body text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-violet/20">
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="fixed">Fixed amount ($)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-body text-xs font-medium text-gray-600 mb-1.5">
+                        Value {couponForm.discount_type === 'percentage' ? '(%)' : '($)'} *
+                      </label>
+                      <input type="number" min="0" value={couponForm.discount_value}
+                        onChange={e => setCouponForm(f => ({ ...f, discount_value: e.target.value }))}
+                        placeholder={couponForm.discount_type === 'percentage' ? '20' : '50'}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/20" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-body text-xs font-medium text-gray-600 mb-1.5">Expiry Date</label>
+                      <input type="date" value={couponForm.expiry_date}
+                        onChange={e => setCouponForm(f => ({ ...f, expiry_date: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/20" />
+                    </div>
+                    <div>
+                      <label className="block font-body text-xs font-medium text-gray-600 mb-1.5">Max Uses</label>
+                      <input type="number" min="0" value={couponForm.max_uses}
+                        onChange={e => setCouponForm(f => ({ ...f, max_uses: e.target.value }))}
+                        placeholder="Unlimited"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/20" />
+                    </div>
+                  </div>
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <button type="button" onClick={() => setCouponForm(f => ({ ...f, active: !f.active }))}
+                      className={`relative w-9 h-5 rounded-full overflow-hidden transition-colors ${couponForm.active ? 'bg-brand-violet' : 'bg-gray-200'}`}>
+                      <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${couponForm.active ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    </button>
+                    <span className="font-body text-sm text-gray-600">Active</span>
+                  </label>
+                  {couponError && <p className="font-body text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{couponError}</p>}
+                </div>
+                <div className="flex gap-3 mt-6">
+                  <button onClick={() => setShowCouponModal(false)}
+                    className="flex-1 px-4 py-2 rounded-lg border border-gray-200 font-body text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+                  <Button onClick={saveCoupon} loading={savingCoupon} className="flex-1">
+                    {editingCoupon ? 'Save' : 'Create'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── PACKAGES TAB ── */}
+      {activeTab === 'packages' && (
+      <div>
       {/* Table */}
       {loading ? (
         <div className="flex justify-center py-24"><Spinner /></div>
       ) : packages.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
           <CreditCard size={28} className="mx-auto text-gray-200 mb-3" strokeWidth={1.5} />
-          <p className="font-body text-sm font-medium text-gray-500">Aucun forfait</p>
-          <p className="font-body text-xs text-gray-300 mt-1">Crée ton premier forfait pour tes clientes</p>
+          <p className="font-body text-sm font-medium text-gray-500">No packages</p>
+          <p className="font-body text-xs text-gray-300 mt-1">Create your first package for your clients</p>
           <button onClick={openAdd} className="mt-4 px-4 py-2 rounded-lg bg-brand-violet text-white font-body text-sm font-medium hover:bg-brand-violet/90">
-            + Ajouter un forfait
+            + Add package
           </button>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="grid grid-cols-[1fr_100px_130px_80px_80px_48px] items-center px-5 py-3 border-b border-gray-100 bg-gray-50">
-            {['Forfait', 'Prix', 'Durée', 'Actif', 'Visible', ''].map(h => (
+            {['Package', 'Price', 'Duration', 'Active', 'Visible', ''].map(h => (
               <div key={h} className="font-body text-xs font-medium text-gray-400">{h}</div>
             ))}
           </div>
@@ -262,17 +499,17 @@ export function CoachPackages() {
                 {menuOpen === pkg.id && (
                   <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-44">
                     <button onClick={() => copyLink(pkg)} className="flex items-center gap-2 w-full px-3 py-2 font-body text-sm text-gray-700 hover:bg-gray-50">
-                      <Link size={13} /> Copier le lien
+                      <Link size={13} /> Copy link
                     </button>
                     <button onClick={() => { setPreviewPkg(pkg); setMenuOpen(null) }} className="flex items-center gap-2 w-full px-3 py-2 font-body text-sm text-gray-700 hover:bg-gray-50">
-                      <Eye size={13} /> Aperçu
+                      <Eye size={13} /> Preview
                     </button>
                     <button onClick={() => openEdit(pkg)} className="flex items-center gap-2 w-full px-3 py-2 font-body text-sm text-gray-700 hover:bg-gray-50">
-                      <Pencil size={13} /> Modifier
+                      <Pencil size={13} /> Edit
                     </button>
                     <div className="border-t border-gray-100 my-1" />
                     <button onClick={() => deletePackage(pkg.id)} className="flex items-center gap-2 w-full px-3 py-2 font-body text-sm text-red-600 hover:bg-red-50">
-                      <Trash2 size={13} /> Supprimer
+                      <Trash2 size={13} /> Delete
                     </button>
                   </div>
                 )}
@@ -287,7 +524,7 @@ export function CoachPackages() {
       {/* Copied toast */}
       {copied && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl shadow-lg font-body text-sm">
-          <Check size={14} className="text-green-400" /> Lien copié !
+          <Check size={14} className="text-green-400" /> Link copied!
         </div>
       )}
 
@@ -296,7 +533,7 @@ export function CoachPackages() {
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-heading text-lg font-semibold text-gray-900">Aperçu</h2>
+              <h2 className="font-heading text-lg font-semibold text-gray-900">Preview</h2>
               <button onClick={() => setPreviewPkg(null)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={16} /></button>
             </div>
             <div className="border border-gray-200 rounded-xl p-5 bg-gradient-to-br from-brand-lavender/30 to-white">
@@ -315,7 +552,7 @@ export function CoachPackages() {
                 <span className="font-heading text-3xl font-bold text-brand-deep">${previewPkg.price_cad}</span>
                 <span className="font-body text-sm text-gray-400 mb-1">{recurringLabel}</span>
               </div>
-              <button className="w-full py-2.5 rounded-xl bg-brand-violet text-white font-body text-sm font-medium">S'inscrire</button>
+              <button className="w-full py-2.5 rounded-xl bg-brand-violet text-white font-body text-sm font-medium">Sign up</button>
             </div>
           </div>
         </div>
@@ -328,7 +565,7 @@ export function CoachPackages() {
             {/* Modal header */}
             <div className="flex items-center justify-between px-8 pt-7 pb-0">
               <h2 className="font-heading text-xl font-semibold text-gray-900">
-                {editingPkg ? 'Modifier le forfait' : 'Créer un nouveau forfait'} 💳
+                {editingPkg ? 'Edit package' : 'Create new package'} 💳
               </h2>
               <button onClick={() => setShowModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={16} /></button>
             </div>
@@ -362,13 +599,13 @@ export function CoachPackages() {
                 <>
                   <div>
                     <label className="block font-body text-sm font-semibold text-gray-800 mb-2">
-                      Nom du forfait <span className="text-red-500">*</span>
+                      Package name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={form.name}
                       onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                      placeholder="ex. VIP avec nutrition"
+                      placeholder="e.g. VIP with nutrition"
                       className="w-full px-4 py-2.5 rounded-lg border border-gray-300 font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/20 focus:border-brand-violet"
                     />
                   </div>
@@ -380,7 +617,7 @@ export function CoachPackages() {
                     <textarea
                       value={form.description}
                       onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                      placeholder="Décris ce que comprend ce forfait..."
+                      placeholder="Describe what this package includes..."
                       rows={3}
                       className="w-full px-4 py-2.5 rounded-lg border border-gray-300 font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/20 focus:border-brand-violet resize-none"
                     />
@@ -390,7 +627,7 @@ export function CoachPackages() {
                   <div className="grid grid-cols-4 gap-3">
                     <div>
                       <label className="block font-body text-xs font-semibold text-gray-700 mb-1.5">
-                        Devise <span className="text-red-500">*</span>
+                        Currency <span className="text-red-500">*</span>
                       </label>
                       <select value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}
                         className="w-full px-3 py-2.5 rounded-lg border border-gray-300 font-body text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-violet/20">
@@ -399,7 +636,7 @@ export function CoachPackages() {
                     </div>
                     <div>
                       <label className="block font-body text-xs font-semibold text-gray-700 mb-1.5">
-                        Type de plan <span className="text-red-500">*</span>
+                        Plan type <span className="text-red-500">*</span>
                       </label>
                       <select value={form.plan_type} onChange={e => setForm(f => ({ ...f, plan_type: e.target.value }))}
                         className="w-full px-3 py-2.5 rounded-lg border border-gray-300 font-body text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-violet/20">
@@ -408,7 +645,7 @@ export function CoachPackages() {
                     </div>
                     <div>
                       <label className="block font-body text-xs font-semibold text-gray-700 mb-1.5">
-                        Pour combien de temps ? <span className="text-red-500">*</span>
+                        How long? <span className="text-red-500">*</span>
                       </label>
                       <select value={form.duration_length} onChange={e => setForm(f => ({ ...f, duration_length: e.target.value }))}
                         className="w-full px-3 py-2.5 rounded-lg border border-gray-300 font-body text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-violet/20">
@@ -417,7 +654,7 @@ export function CoachPackages() {
                     </div>
                     <div>
                       <label className="block font-body text-xs font-semibold text-gray-700 mb-1.5">
-                        Prix <span className="text-red-500">*</span>
+                        Price <span className="text-red-500">*</span>
                       </label>
                       <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-gray-300 bg-white">
                         <span className="font-body text-sm text-gray-400">$</span>
@@ -426,7 +663,7 @@ export function CoachPackages() {
                           placeholder="0"
                           className="flex-1 min-w-0 font-body text-sm focus:outline-none w-12" />
                         <span className="font-body text-xs text-gray-400 whitespace-nowrap">
-                          {form.plan_type === 'Monthly' ? 'par mois' : form.plan_type === 'Weekly' ? 'par sem.' : form.plan_type === 'Yearly' ? 'par an' : ''}
+                          {form.plan_type === 'Monthly' ? 'per month' : form.plan_type === 'Weekly' ? 'per week' : form.plan_type === 'Yearly' ? 'per year' : ''}
                         </span>
                       </div>
                     </div>
@@ -435,9 +672,9 @@ export function CoachPackages() {
                   {/* Checkboxes */}
                   <div className="space-y-3">
                     {([
-                      ['free_trial', 'Inclure un essai gratuit'],
-                      ['initial_fee', 'Inclure des frais initiaux'],
-                      ['instant_access', "Donner accès instantané à l'achat ?"],
+                      ['free_trial', 'Include a free trial'],
+                      ['initial_fee', 'Include an initial fee'],
+                      ['instant_access', 'Give instant access on purchase?'],
                     ] as [keyof typeof form, string][]).map(([field, label]) => (
                       <label key={field} className="flex items-center gap-3 cursor-pointer group">
                         <div
@@ -457,7 +694,7 @@ export function CoachPackages() {
                   {form.price_cad && Number(form.price_cad) > 0 && form.plan_type !== 'One-time' && (
                     <div className="flex justify-end">
                       <p className="font-body text-sm text-gray-500">
-                        Paiement récurrent : <span className="text-brand-violet font-semibold">${form.price_cad}</span>
+                        Recurring payment: <span className="text-brand-violet font-semibold">${form.price_cad}</span>
                       </p>
                     </div>
                   )}
@@ -472,7 +709,7 @@ export function CoachPackages() {
                   </div>
                   <p className="font-body text-sm font-medium text-gray-700 mb-1">Automations</p>
                   <p className="font-body text-xs text-gray-400">
-                    Les automations (emails de bienvenue, rappels de paiement) seront disponibles avec l'intégration Stripe.
+                    Automations (welcome emails, payment reminders) will be available with Stripe integration.
                   </p>
                 </div>
               )}
@@ -481,7 +718,7 @@ export function CoachPackages() {
               {step === 3 && (
                 <div>
                   <label className="block font-body text-sm font-semibold text-gray-800 mb-3">
-                    Ce qui est inclus dans ce forfait
+                    What is included in this package
                   </label>
                   <div className="space-y-2">
                     {form.benefits.map((b, i) => (
@@ -491,7 +728,7 @@ export function CoachPackages() {
                           type="text"
                           value={b}
                           onChange={e => setBenefit(i, e.target.value)}
-                          placeholder={`Avantage ${i + 1}...`}
+                          placeholder={`Benefit ${i + 1}...`}
                           className="flex-1 px-3 py-2 rounded-lg border border-gray-200 font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/20"
                         />
                         {form.benefits.length > 1 && (
@@ -504,7 +741,7 @@ export function CoachPackages() {
                   </div>
                   <button onClick={addBenefit}
                     className="mt-3 flex items-center gap-1.5 font-body text-sm text-brand-violet hover:text-brand-violet/80">
-                    <Plus size={14} /> Ajouter un avantage
+                    <Plus size={14} /> Add benefit
                   </button>
 
                   {/* Visibility toggles */}
@@ -515,7 +752,7 @@ export function CoachPackages() {
                           className={`relative w-9 h-5 rounded-full transition-colors overflow-hidden ${form[field] ? 'bg-brand-violet' : 'bg-gray-200'}`}>
                           <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${form[field] ? 'translate-x-4' : 'translate-x-0.5'}`} />
                         </button>
-                        <span className="font-body text-sm text-gray-600">{field === 'active' ? 'Actif' : 'Visible'}</span>
+                        <span className="font-body text-sm text-gray-600">{field === 'active' ? 'Active' : 'Visible'}</span>
                       </label>
                     ))}
                   </div>
@@ -529,18 +766,20 @@ export function CoachPackages() {
             <div className="flex items-center justify-between px-8 py-5 border-t border-gray-100">
               <button onClick={step === 1 ? () => setShowModal(false) : prevStep}
                 className="px-6 py-2.5 rounded-xl border border-gray-200 font-body text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                {step === 1 ? 'Annuler' : 'Retour'}
+                {step === 1 ? 'Cancel' : 'Back'}
               </button>
               {step < 3 ? (
-                <Button onClick={nextStep}>Suivant</Button>
+                <Button onClick={nextStep}>Next</Button>
               ) : (
                 <Button onClick={savePackage} loading={saving}>
-                  {editingPkg ? 'Sauvegarder' : 'Créer le forfait'}
+                  {editingPkg ? 'Save' : 'Create package'}
                 </Button>
               )}
             </div>
           </div>
         </div>
+      )}
+      </div>
       )}
     </div>
   )

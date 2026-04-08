@@ -42,19 +42,19 @@ function diff(current: number | null, previous: number | null): JSX.Element | nu
 
 function timeAgo(date: string): string {
   const days = Math.floor((Date.now() - new Date(date).getTime()) / 86400000)
-  if (days === 0) return "Aujourd'hui"
-  if (days === 1) return 'Hier'
-  return `Il y a ${days} j`
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  return `${days}d ago`
 }
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
-  { id: 'overview',  label: 'Aperçu',       icon: User },
+  { id: 'overview',  label: 'Overview',      icon: User },
   { id: 'checkins',  label: 'Check-ins',     icon: ClipboardCheck },
-  { id: 'training',  label: 'Entraînements', icon: Dumbbell },
+  { id: 'training',  label: 'Workouts',      icon: Dumbbell },
   { id: 'nutrition', label: 'Nutrition',     icon: Apple },
   { id: 'photos',    label: 'Photos',        icon: Camera },
-  { id: 'metrics',   label: 'Mesures',       icon: TrendingUp },
-  { id: 'payments',  label: 'Paiements',     icon: CreditCard },
+  { id: 'metrics',   label: 'Measurements',  icon: TrendingUp },
+  { id: 'payments',  label: 'Payments',      icon: CreditCard },
 ]
 
 export function ClientDetail() {
@@ -107,7 +107,7 @@ export function ClientDetail() {
     await supabase.from('profiles').update({ coach_note: noteText } as any).eq('id', client.id)
     setEditingNote(false)
     setSavingNote(false)
-    addToast('Note sauvegardée', 'success')
+    addToast('Note saved', 'success')
   }
 
   async function saveMeasurement() {
@@ -127,9 +127,9 @@ export function ClientDetail() {
     }
     const { error } = await supabase.from('measurements').insert(payload as any)
     if (error) {
-      addToast('Erreur lors de la sauvegarde', 'error')
+      addToast('Error saving measurements', 'error')
     } else {
-      addToast('Mesures ajoutées !', 'success')
+      addToast('Measurements added!', 'success')
       setShowMeasModal(false)
       setMeasForm({ weight_kg: '', hip_cm: '', waist_cm: '', chest_cm: '', bicep_left_cm: '', bicep_right_cm: '', thigh_cm: '', note: '' })
       loadAll()
@@ -144,9 +144,9 @@ export function ClientDetail() {
   if (!client) {
     return (
       <div className="p-8 text-center font-body text-gray-400">
-        Cliente introuvable.
+        Client not found.
         <button onClick={() => navigate('/coach/clients')} className="block mx-auto mt-4 text-brand-violet underline">
-          Retour aux clients
+          Back to clients
         </button>
       </div>
     )
@@ -208,12 +208,12 @@ export function ClientDetail() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Info card */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="font-body text-sm font-semibold text-gray-700 mb-4">Informations</h2>
+            <h2 className="font-body text-sm font-semibold text-gray-700 mb-4">Information</h2>
             <dl className="space-y-3">
               {[
                 ['Email', client.email ?? '—'],
-                ['Forfait', client.forfait ?? '—'],
-                ['Membre depuis', new Date(client.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })],
+                ['Package', client.forfait ?? '—'],
+                ['Member since', new Date(client.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })],
                 ['Check-ins', `${checkIns.length} total`],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between">
@@ -227,7 +227,7 @@ export function ClientDetail() {
           {/* Coach note */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-body text-sm font-semibold text-gray-700">Note coach</h2>
+              <h2 className="font-body text-sm font-semibold text-gray-700">Coach note</h2>
               {!editingNote && (
                 <button
                   onClick={() => setEditingNote(true)}
@@ -243,7 +243,7 @@ export function ClientDetail() {
                   value={noteText}
                   onChange={e => setNoteText(e.target.value)}
                   rows={4}
-                  placeholder="Ajoute une note privée sur cette cliente..."
+                  placeholder="Add a private note about this client..."
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 font-body text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-violet/20 resize-none"
                 />
                 <div className="flex gap-2">
@@ -251,16 +251,16 @@ export function ClientDetail() {
                     onClick={() => setEditingNote(false)}
                     className="px-3 py-1.5 rounded-lg border border-gray-200 font-body text-xs text-gray-500 hover:bg-gray-50"
                   >
-                    Annuler
+                    Cancel
                   </button>
                   <Button size="sm" onClick={saveNote} loading={savingNote}>
-                    <Save size={13} /> Sauvegarder
+                    <Save size={13} /> Save
                   </Button>
                 </div>
               </div>
             ) : (
               <p className="font-body text-sm text-gray-500 whitespace-pre-wrap min-h-[60px]">
-                {noteText || <span className="text-gray-300 italic">Aucune note</span>}
+                {noteText || <span className="text-gray-300 italic">No note</span>}
               </p>
             )}
           </div>
@@ -268,15 +268,15 @@ export function ClientDetail() {
           {/* Quick stats */}
           {latest && (
             <div className="bg-white rounded-xl border border-gray-200 p-5 md:col-span-2">
-              <h2 className="font-body text-sm font-semibold text-gray-700 mb-4">Dernières mesures</h2>
+              <h2 className="font-body text-sm font-semibold text-gray-700 mb-4">Latest measurements</h2>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
                 {([
-                  ['Poids', latest.weight_kg, previous?.weight_kg, 'kg'],
-                  ['Hanches', latest.hip_cm, previous?.hip_cm, 'cm'],
-                  ['Taille', latest.waist_cm, previous?.waist_cm, 'cm'],
-                  ['Poitrine', latest.chest_cm, previous?.chest_cm, 'cm'],
-                  ['Bicep G.', latest.bicep_left_cm, previous?.bicep_left_cm, 'cm'],
-                  ['Cuisse', latest.thigh_cm, previous?.thigh_cm, 'cm'],
+                  ['Weight', latest.weight_kg, previous?.weight_kg, 'kg'],
+                  ['Hips', latest.hip_cm, previous?.hip_cm, 'cm'],
+                  ['Waist', latest.waist_cm, previous?.waist_cm, 'cm'],
+                  ['Chest', latest.chest_cm, previous?.chest_cm, 'cm'],
+                  ['Bicep L.', latest.bicep_left_cm, previous?.bicep_left_cm, 'cm'],
+                  ['Thigh', latest.thigh_cm, previous?.thigh_cm, 'cm'],
                 ] as [string, number | null, number | null, string][]).map(([label, cur, prev, unit]) => (
                   <div key={label} className="text-center">
                     <p className="font-body text-xs text-gray-400 mb-1">{label}</p>
@@ -296,25 +296,25 @@ export function ClientDetail() {
       {activeTab === 'checkins' && (
         <div className="space-y-3">
           {checkIns.length === 0 ? (
-            <p className="font-body text-sm text-gray-400 py-12 text-center">Aucun check-in pour cette cliente</p>
+            <p className="font-body text-sm text-gray-400 py-12 text-center">No check-ins for this client</p>
           ) : checkIns.map(ci => (
             <div key={ci.id} className="bg-white rounded-xl border border-gray-200 p-5">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="font-body text-sm font-semibold text-gray-800">Semaine {ci.week}</p>
-                  <p className="font-body text-xs text-gray-400">{new Date(ci.created_at).toLocaleDateString('fr-FR')}</p>
+                  <p className="font-body text-sm font-semibold text-gray-800">Week {ci.week}</p>
+                  <p className="font-body text-xs text-gray-400">{new Date(ci.created_at).toLocaleDateString('en-GB')}</p>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full font-body text-xs font-medium
                   ${ci.status === 'reviewed' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
-                  {ci.status === 'reviewed' ? 'Validé' : 'En attente'}
+                  {ci.status === 'reviewed' ? 'Reviewed' : 'Pending'}
                 </span>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  ['Poids', `${ci.weight_kg ?? '—'} kg`],
-                  ['Énergie', ci.energy ? `${ci.energy}/10` : '—'],
-                  ['Sommeil', ci.sleep_hours ? `${ci.sleep_hours}h` : '—'],
-                  ['Séances', `${ci.sessions_done}/${ci.sessions_total}`],
+                  ['Weight', `${ci.weight_kg ?? '—'} kg`],
+                  ['Energy', ci.energy ? `${ci.energy}/10` : '—'],
+                  ['Sleep', ci.sleep_hours ? `${ci.sleep_hours}h` : '—'],
+                  ['Sessions', `${ci.sessions_done}/${ci.sessions_total}`],
                 ].map(([label, value]) => (
                   <div key={label} className="bg-gray-50 rounded-lg px-3 py-2">
                     <p className="font-body text-xs text-gray-400">{label}</p>
@@ -324,7 +324,7 @@ export function ClientDetail() {
               </div>
               {ci.client_note && (
                 <p className="mt-3 font-body text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
-                  <span className="font-medium text-gray-600">Note : </span>{ci.client_note}
+                  <span className="font-medium text-gray-600">Note: </span>{ci.client_note}
                 </p>
               )}
             </div>
@@ -336,20 +336,20 @@ export function ClientDetail() {
       {activeTab === 'metrics' && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-body text-sm font-semibold text-gray-700">Historique des mesures</h2>
+            <h2 className="font-body text-sm font-semibold text-gray-700">Measurement history</h2>
             <Button size="sm" onClick={() => setShowMeasModal(true)}>
-              <Plus size={14} /> Ajouter
+              <Plus size={14} /> Add
             </Button>
           </div>
 
           {measurements.length === 0 ? (
-            <p className="font-body text-sm text-gray-400 py-12 text-center">Aucune mesure enregistrée</p>
+            <p className="font-body text-sm text-gray-400 py-12 text-center">No measurements recorded</p>
           ) : (
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    {['Date', 'Poids', 'Hanches', 'Taille', 'Poitrine', 'Bicep G.', 'Cuisse'].map(h => (
+                    {['Date', 'Weight', 'Hips', 'Waist', 'Chest', 'Bicep L.', 'Thigh'].map(h => (
                       <th key={h} className="text-left font-body text-xs text-gray-400 font-medium px-4 py-3">{h}</th>
                     ))}
                   </tr>
@@ -360,7 +360,7 @@ export function ClientDetail() {
                     return (
                       <tr key={m.id} className="border-b border-gray-50 last:border-0">
                         <td className="px-4 py-3 font-body text-xs text-gray-500">
-                          {new Date(m.recorded_at).toLocaleDateString('fr-FR')}
+                          {new Date(m.recorded_at).toLocaleDateString('en-GB')}
                         </td>
                         {([
                           [m.weight_kg, prev?.weight_kg, 'kg'],
@@ -388,8 +388,8 @@ export function ClientDetail() {
       {activeTab === 'training' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
           <Dumbbell size={32} className="mx-auto text-gray-200 mb-3" />
-          <p className="font-body text-sm text-gray-400">Les programmes d'entraînement seront disponibles ici.</p>
-          <p className="font-body text-xs text-gray-300 mt-1">Va dans la section Entraînements pour créer un programme.</p>
+          <p className="font-body text-sm text-gray-400">Training programs will be available here.</p>
+          <p className="font-body text-xs text-gray-300 mt-1">Go to the Workouts section to create a program.</p>
         </div>
       )}
 
@@ -397,8 +397,8 @@ export function ClientDetail() {
       {activeTab === 'nutrition' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
           <Apple size={32} className="mx-auto text-gray-200 mb-3" />
-          <p className="font-body text-sm text-gray-400">Le plan nutritionnel sera affiché ici.</p>
-          <p className="font-body text-xs text-gray-300 mt-1">Va dans la section Nutrition pour créer un plan.</p>
+          <p className="font-body text-sm text-gray-400">The nutrition plan will be displayed here.</p>
+          <p className="font-body text-xs text-gray-300 mt-1">Go to the Nutrition section to create a plan.</p>
         </div>
       )}
 
@@ -406,7 +406,7 @@ export function ClientDetail() {
       {activeTab === 'photos' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
           <Camera size={32} className="mx-auto text-gray-200 mb-3" />
-          <p className="font-body text-sm text-gray-400">Les photos de progression apparaîtront ici après chaque check-in.</p>
+          <p className="font-body text-sm text-gray-400">Progress photos will appear here after each check-in.</p>
         </div>
       )}
 
@@ -414,35 +414,35 @@ export function ClientDetail() {
       {activeTab === 'payments' && (
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="font-body text-sm font-semibold text-gray-700 mb-4">Abonnement</h2>
+            <h2 className="font-body text-sm font-semibold text-gray-700 mb-4">Subscription</h2>
             <div className="flex items-center justify-between py-3 border-b border-gray-50">
               <div>
-                <p className="font-body text-sm font-medium text-gray-800">{client.forfait ?? 'Aucun forfait actif'}</p>
-                <p className="font-body text-xs text-gray-400 mt-0.5">Membre depuis {new Date(client.created_at).toLocaleDateString('fr-FR')}</p>
+                <p className="font-body text-sm font-medium text-gray-800">{client.forfait ?? 'No active package'}</p>
+                <p className="font-body text-xs text-gray-400 mt-0.5">Member since {new Date(client.created_at).toLocaleDateString('en-GB')}</p>
               </div>
               <span className={`px-2.5 py-1 rounded-full font-body text-xs font-medium
                 ${client.forfait ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
-                {client.forfait ? 'Actif' : 'Inactif'}
+                {client.forfait ? 'Active' : 'Inactive'}
               </span>
             </div>
             <div className="pt-4">
               <p className="font-body text-xs text-gray-400 text-center">
-                L'intégration Stripe permettra de voir les paiements, prochaines factures et historique ici.
+                Stripe integration will allow viewing payments, upcoming invoices, and history here.
               </p>
             </div>
           </div>
 
           {/* Activity log */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="font-body text-sm font-semibold text-gray-700 mb-4">Journal d'activité</h2>
+            <h2 className="font-body text-sm font-semibold text-gray-700 mb-4">Activity log</h2>
             {checkIns.length === 0 ? (
-              <p className="font-body text-xs text-gray-300 text-center py-4">Aucune activité</p>
+              <p className="font-body text-xs text-gray-300 text-center py-4">No activity</p>
             ) : (
               <div className="space-y-2">
                 {checkIns.slice(0, 10).map(ci => (
                   <div key={ci.id} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
                     <div className="w-1.5 h-1.5 rounded-full bg-brand-violet flex-shrink-0" />
-                    <p className="font-body text-xs text-gray-600 flex-1">Check-in semaine {ci.week}</p>
+                    <p className="font-body text-xs text-gray-600 flex-1">Week {ci.week} check-in</p>
                     <p className="font-body text-xs text-gray-400">{timeAgo(ci.created_at)}</p>
                   </div>
                 ))}
@@ -456,16 +456,16 @@ export function ClientDetail() {
       {showMeasModal && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-            <h2 className="font-heading text-xl font-semibold text-gray-900 mb-5">Ajouter des mesures</h2>
+            <h2 className="font-heading text-xl font-semibold text-gray-900 mb-5">Add measurements</h2>
             <div className="grid grid-cols-2 gap-4">
               {([
-                ['weight_kg', 'Poids (kg)', '65'],
-                ['hip_cm', 'Hanches (cm)', '95'],
-                ['waist_cm', 'Taille (cm)', '70'],
-                ['chest_cm', 'Poitrine (cm)', '90'],
-                ['bicep_left_cm', 'Bicep gauche (cm)', '28'],
-                ['bicep_right_cm', 'Bicep droit (cm)', '28'],
-                ['thigh_cm', 'Cuisse (cm)', '55'],
+                ['weight_kg', 'Weight (kg)', '65'],
+                ['hip_cm', 'Hips (cm)', '95'],
+                ['waist_cm', 'Waist (cm)', '70'],
+                ['chest_cm', 'Chest (cm)', '90'],
+                ['bicep_left_cm', 'Left bicep (cm)', '28'],
+                ['bicep_right_cm', 'Right bicep (cm)', '28'],
+                ['thigh_cm', 'Thigh (cm)', '55'],
               ] as [keyof typeof measForm, string, string][]).map(([field, label, placeholder]) => (
                 <div key={field}>
                   <label className="block font-body text-xs font-medium text-gray-600 mb-1">{label}</label>
@@ -485,7 +485,7 @@ export function ClientDetail() {
                   type="text"
                   value={measForm.note}
                   onChange={e => setMeasForm(f => ({ ...f, note: e.target.value }))}
-                  placeholder="Optionnel"
+                  placeholder="Optional"
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/20"
                 />
               </div>
@@ -495,10 +495,10 @@ export function ClientDetail() {
                 onClick={() => setShowMeasModal(false)}
                 className="flex-1 px-4 py-2 rounded-lg border border-gray-200 font-body text-sm text-gray-600 hover:bg-gray-50"
               >
-                Annuler
+                Cancel
               </button>
               <Button onClick={saveMeasurement} loading={savingMeas} className="flex-1">
-                Sauvegarder
+                Save
               </Button>
             </div>
           </div>

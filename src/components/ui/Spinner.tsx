@@ -29,7 +29,7 @@ export function PageLoader() {
     <div className="min-h-screen flex items-center justify-center bg-brand-lavender">
       <div className="text-center">
         <Spinner size="lg" />
-        <p className="mt-4 font-body text-brand-deep/60 text-sm">Chargement...</p>
+        <p className="mt-4 font-body text-brand-deep/60 text-sm">Loading...</p>
       </div>
     </div>
   )

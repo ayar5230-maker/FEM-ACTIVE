@@ -5,8 +5,8 @@ import { useUnreadMessages } from '../../hooks/useUnreadMessages'
 import { useAuthContext } from '../../contexts/AuthContext'
 
 const navItems = [
-  { to: '/client', label: 'Accueil', icon: Home, end: true },
-  { to: '/client/workouts', label: 'Entraînements', icon: Dumbbell },
+  { to: '/client', label: 'Home', icon: Home, end: true },
+  { to: '/client/workouts', label: 'Workouts', icon: Dumbbell },
   { to: '/client/nutrition', label: 'Nutrition', icon: Apple },
   { to: '/client/checkin', label: 'Check-in', icon: ClipboardCheck },
   { to: '/client/messages', label: 'Messages', icon: MessageSquare, hasUnread: true },
@@ -27,7 +27,7 @@ export function ClientLayout() {
       <aside className="hidden md:flex flex-col w-56 min-h-screen bg-white border-r border-gray-100 fixed left-0 top-0">
         <div className="px-5 py-5 border-b border-gray-100">
           <h1 className="font-heading text-lg italic font-semibold text-brand-deep">Fem'Active</h1>
-          <p className="font-body text-xs text-gray-400 mt-0.5">Mon Espace</p>
+          <p className="font-body text-xs text-gray-400 mt-0.5">My Space</p>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5">
@@ -64,7 +64,7 @@ export function ClientLayout() {
               {(profile?.full_name ?? 'C')[0].toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-body text-xs font-medium text-gray-800 truncate">{profile?.full_name ?? 'Cliente'}</p>
+              <p className="font-body text-xs font-medium text-gray-800 truncate">{profile?.full_name ?? 'Client'}</p>
               {profile?.forfait && (
                 <p className="font-body text-xs text-brand-violet truncate">{profile.forfait}</p>
               )}
@@ -75,7 +75,7 @@ export function ClientLayout() {
             className="flex items-center gap-2 font-body text-xs text-gray-400 hover:text-gray-600 transition-colors"
           >
             <LogOut size={13} />
-            Déconnexion
+            Sign out
           </button>
         </div>
       </aside>

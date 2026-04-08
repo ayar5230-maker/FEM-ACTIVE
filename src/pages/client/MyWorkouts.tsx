@@ -71,9 +71,9 @@ export function ClientWorkouts() {
         })
         return updated
       })
-      if (!exercise.completed) addToast('Exercice complété ! 💪', 'success')
+      if (!exercise.completed) addToast('Exercise completed! 💪', 'success')
     } else {
-      addToast('Erreur lors de la mise à jour', 'error')
+      addToast('Error updating exercise', 'error')
     }
     setToggling(null)
   }
@@ -86,9 +86,9 @@ export function ClientWorkouts() {
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       <div className="mb-8">
-        <h1 className="font-heading text-3xl font-semibold text-brand-deep">Mes entraînements</h1>
+        <h1 className="font-heading text-3xl font-semibold text-brand-deep">My workouts</h1>
         <p className="font-body text-brand-deep/50 mt-1">
-          Semaine {currentWeek} de ton programme
+          Week {currentWeek} of your program
         </p>
       </div>
 
@@ -97,9 +97,9 @@ export function ClientWorkouts() {
       ) : workoutsByWeek.size === 0 ? (
         <Card>
           <div className="text-center py-12">
-            <p className="font-heading text-xl text-brand-deep/30">Aucun programme assigné</p>
+            <p className="font-heading text-xl text-brand-deep/30">No program assigned</p>
             <p className="font-body text-sm text-brand-deep/30 mt-2">
-              Ton coach prépare ton programme personnalisé 💜
+              Your coach is preparing your personalized program 💜
             </p>
           </div>
         </Card>
@@ -117,7 +117,7 @@ export function ClientWorkouts() {
                     : 'bg-white border border-brand-lavender text-brand-deep/60 hover:border-brand-violet/40'
                 }`}
               >
-                Semaine {w}
+                Week {w}
                 {w === currentWeek && (
                   <span className="ml-1.5 text-xs opacity-70">•</span>
                 )}
@@ -138,7 +138,7 @@ export function ClientWorkouts() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <p className="font-body text-xs text-brand-violet font-medium uppercase tracking-wider">
-                        {workout.day_label ?? `Semaine ${workout.week}`}
+                        {workout.day_label ?? `Week ${workout.week}`}
                       </p>
                       <h3 className="font-heading text-xl font-semibold text-brand-deep mt-0.5">
                         {workout.title}
@@ -161,7 +161,7 @@ export function ClientWorkouts() {
                   {/* Coach note */}
                   {workout.coach_note && (
                     <div className="bg-brand-lavender/40 rounded-xl px-4 py-3 mb-4">
-                      <p className="font-body text-xs font-medium text-brand-deep/50 mb-0.5">Note coach</p>
+                      <p className="font-body text-xs font-medium text-brand-deep/50 mb-0.5">Coach note</p>
                       <p className="font-body text-sm text-brand-deep">{workout.coach_note}</p>
                     </div>
                   )}
@@ -200,7 +200,7 @@ export function ClientWorkouts() {
                                 {exercise.name}
                               </p>
                               <p className={`font-body text-xs ${exercise.completed ? 'text-green-600/60' : 'text-brand-deep/50'}`}>
-                                {exercise.sets} séries × {exercise.reps} reps
+                                {exercise.sets} sets × {exercise.reps} reps
                                 {exercise.weight_kg ? ` · ${exercise.weight_kg} kg` : ''}
                               </p>
                             </div>
@@ -212,7 +212,7 @@ export function ClientWorkouts() {
                   {pct === 100 && (
                     <div className="mt-4 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-center">
                       <p className="font-body text-sm font-medium text-green-700">
-                        🎉 Entraînement complété ! Belle performance !
+                        🎉 Workout completed! Great performance!
                       </p>
                     </div>
                   )}

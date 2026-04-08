@@ -65,9 +65,9 @@ export function CoachDashboard() {
     const recentActivity: RecentActivity[] = pending.slice(0, 6).map(ci => ({
       id: ci.id,
       type: 'checkin',
-      client: (ci.profile as Profile | undefined)?.full_name ?? 'Cliente',
-      description: `Check-in semaine ${ci.week} soumis`,
-      time: new Date(ci.created_at).toLocaleDateString('fr-CA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      client: (ci.profile as Profile | undefined)?.full_name ?? 'Client',
+      description: `Week ${ci.week} check-in submitted`,
+      time: new Date(ci.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
     }))
     setActivity(recentActivity)
     setLoading(false)
@@ -75,9 +75,9 @@ export function CoachDashboard() {
 
   const greeting = () => {
     const h = new Date().getHours()
-    if (h < 12) return 'Bonjour'
-    if (h < 18) return 'Bon après-midi'
-    return 'Bonsoir'
+    if (h < 12) return 'Good morning'
+    if (h < 18) return 'Good afternoon'
+    return 'Good evening'
   }
 
   return (
@@ -88,7 +88,7 @@ export function CoachDashboard() {
           {greeting()}, {profile?.full_name?.split(' ')[0] ?? 'Coach'} 👋
         </h1>
         <p className="font-body text-brand-deep/50 mt-1">
-          {new Date().toLocaleDateString('fr-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          {new Date().toLocaleDateString('en-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
       </div>
 
@@ -101,25 +101,25 @@ export function CoachDashboard() {
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard
-              label="Clientes actives"
+              label="Active clients"
               value={stats.activeClients}
               icon="◉"
               accent
             />
             <StatCard
-              label="Check-ins en attente"
+              label="Pending check-ins"
               value={stats.pendingCheckIns}
               icon="◍"
             />
             <StatCard
-              label="Messages non lus"
+              label="Unread messages"
               value={stats.unreadMessages}
               icon="◈"
             />
             <StatCard
-              label="Adhérence hebdo"
+              label="Weekly adherence"
               value={`${stats.weeklyAdherence}%`}
-              sub="exercices complétés"
+              sub="exercises completed"
               icon="◎"
             />
           </div>
@@ -128,11 +128,11 @@ export function CoachDashboard() {
             {/* Pending check-ins */}
             <Card>
               <h2 className="font-heading text-lg font-semibold text-brand-deep mb-4">
-                Check-ins en attente
+                Pending check-ins
               </h2>
               {pendingCheckIns.length === 0 ? (
                 <p className="font-body text-sm text-brand-deep/40 text-center py-6">
-                  Aucun check-in en attente ✓
+                  No pending check-ins ✓
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -143,14 +143,14 @@ export function CoachDashboard() {
                     >
                       <div>
                         <p className="font-body text-sm font-medium text-brand-deep">
-                          {(ci.profile as Profile | undefined)?.full_name ?? 'Cliente'}
+                          {(ci.profile as Profile | undefined)?.full_name ?? 'Client'}
                         </p>
                         <p className="font-body text-xs text-brand-deep/50">
-                          Semaine {ci.week} · {new Date(ci.created_at).toLocaleDateString('fr-CA')}
+                          Week {ci.week} · {new Date(ci.created_at).toLocaleDateString('en-CA')}
                         </p>
                       </div>
                       <span className="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg font-body text-xs font-medium border border-amber-200">
-                        En attente
+                        Pending
                       </span>
                     </div>
                   ))}
@@ -161,11 +161,11 @@ export function CoachDashboard() {
             {/* Activity feed */}
             <Card>
               <h2 className="font-heading text-lg font-semibold text-brand-deep mb-4">
-                Activité récente
+                Recent activity
               </h2>
               {activity.length === 0 ? (
                 <p className="font-body text-sm text-brand-deep/40 text-center py-6">
-                  Aucune activité récente
+                  No recent activity
                 </p>
               ) : (
                 <div className="space-y-3">

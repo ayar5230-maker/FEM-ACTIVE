@@ -20,7 +20,7 @@ const navSections = [
   {
     label: 'Manage',
     items: [
-      { to: '/coach/packages', label: 'Forfaits', icon: Package },
+      { to: '/coach/packages', label: 'Packages', icon: Package },
     ],
   },
   {
@@ -110,7 +110,7 @@ export function CoachLayout() {
             className="flex items-center gap-2 font-body text-xs text-gray-400 hover:text-gray-600 transition-colors"
           >
             <LogOut size={13} />
-            Déconnexion
+            Sign out
           </button>
         </div>
       </aside>

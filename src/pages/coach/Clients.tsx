@@ -19,9 +19,9 @@ function timeAgo(date: string | null): string {
   if (!date) return '—'
   const diff = Date.now() - new Date(date).getTime()
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  if (days === 0) return "Aujourd'hui"
-  if (days === 1) return 'Hier'
-  return `Il y a ${days} jours`
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  return `${days} days ago`
 }
 
 export function CoachClients() {
@@ -88,9 +88,9 @@ export function CoachClients() {
     })
 
     if (error) {
-      addToast('Erreur — cet email existe peut-être déjà', 'error')
+      addToast('Error — this email may already exist', 'error')
     } else {
-      addToast('Cliente ajoutée !', 'success')
+      addToast('Client added!', 'success')
       setShowAddModal(false)
       setAddForm({ full_name: '', email: '', forfait: '' })
       loadClients()
@@ -160,7 +160,7 @@ export function CoachClients() {
                 <th className="text-left font-body text-xs text-gray-400 font-medium px-4 py-3">Tag</th>
                 <th className="text-left font-body text-xs text-gray-400 font-medium px-4 py-3">Last Check-In</th>
                 <th className="text-left font-body text-xs text-gray-400 font-medium px-4 py-3">Last Active</th>
-                <th className="text-left font-body text-xs text-gray-400 font-medium px-4 py-3">Forfait</th>
+                <th className="text-left font-body text-xs text-gray-400 font-medium px-4 py-3">Package</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -246,7 +246,7 @@ export function CoachClients() {
                 />
               </div>
               <div>
-                <label className="block font-body text-sm font-medium text-gray-700 mb-1">Forfait</label>
+                <label className="block font-body text-sm font-medium text-gray-700 mb-1">Package</label>
                 <input
                   type="text"
                   value={addForm.forfait}
