@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Dumbbell, Apple, ClipboardCheck,
-  MessageSquare, LogOut, Bell
+  MessageSquare, LogOut, Bell, Package
 } from 'lucide-react'
 import { signOut } from '../../lib/auth'
 import { useUnreadMessages } from '../../hooks/useUnreadMessages'
@@ -14,6 +14,7 @@ const navItems = [
   { to: '/coach/nutrition', label: 'Nutrition', icon: Apple },
   { to: '/coach/checkins', label: 'Check-ins', icon: ClipboardCheck },
   { to: '/coach/messages', label: 'Messages', icon: MessageSquare, hasUnread: true },
+  { to: '/coach/packages', label: 'Forfaits', icon: Package },
 ]
 
 export function CoachLayout() {

@@ -12,6 +12,7 @@ import { CoachNutrition } from './pages/coach/Nutrition'
 import { CoachCheckIns } from './pages/coach/CheckIns'
 import { CoachMessages } from './pages/coach/Messages'
 import { ClientDetail } from './pages/coach/ClientDetail'
+import { CoachPackages } from './pages/coach/Packages'
 import { ClientHome } from './pages/client/Home'
 import { ClientWorkouts } from './pages/client/MyWorkouts'
 import { ClientNutrition } from './pages/client/Nutrition'
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="nutrition" element={<CoachNutrition />} />
             <Route path="checkins" element={<CoachCheckIns />} />
             <Route path="messages" element={<CoachMessages />} />
+            <Route path="packages" element={<CoachPackages />} />
           </Route>
 
           {/* Client */}
