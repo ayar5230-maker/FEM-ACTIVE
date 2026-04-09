@@ -141,6 +141,64 @@ export function CoachPackages() {
     setCouponsLoading(false)
   }
 
+  async function loadCatalog() {
+    const { data } = await supabase
+      .from('packages')
+      .select('*')
+      .is('coach_id', null)
+      .eq('active', true)
+      .order('display_order')
+    setCatalog((data as CatalogPackage[]) ?? [])
+    setCatalogLoading(false)
+  }
+
+  async function loadClients() {
+    if (!profile) return
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, forfait, is_founding')
+      .eq('coach_id', profile.id)
+      .eq('role', 'client')
+    setClients((data as ClientOption[]) ?? [])
+  }
+
+  function openAssign(pkg: CatalogPackage) {
+    setAssigningPkg(pkg)
+    setSelectedClientId('')
+    setAssignAsFounding(false)
+    setAssignError('')
+    setShowAssignModal(true)
+  }
+
+  function foundingSpotsFor(group: string | null): { taken: number; total: number } {
+    if (!group) return { taken: 0, total: 0 }
+    const groupPkgSlugs = catalog.filter(p => p.founding_spot_group === group).map(p => p.slug)
+    const taken = clients.filter(c => c.is_founding && groupPkgSlugs.includes(c.forfait ?? '')).length
+    const total = catalog.find(p => p.founding_spot_group === group)?.founding_total_spots ?? 0
+    return { taken, total }
+  }
+
+  async function doAssign() {
+    if (!selectedClientId || !assigningPkg) { setAssignError('Please select a client.'); return }
+    if (assignAsFounding) {
+      const spots = foundingSpotsFor(assigningPkg.founding_spot_group)
+      if (spots.taken >= spots.total) { setAssignError('No founding spots remaining for this group.'); return }
+    }
+    setAssigning(true)
+    setAssignError('')
+    const { error: dbErr } = await supabase
+      .from('profiles')
+      .update({ forfait: assigningPkg.slug, is_founding: assignAsFounding })
+      .eq('id', selectedClientId)
+    if (dbErr) { setAssignError(`Error: ${dbErr.message}`); setAssigning(false); return }
+    await loadClients()
+    setShowAssignModal(false)
+    setAssigning(false)
+    const clientName = clients.find(c => c.id === selectedClientId)?.full_name ?? 'client'
+    setAssignToast(`${assigningPkg.name} assigned to ${clientName} ✓`)
+    setTimeout(() => setAssignToast(''), 3000)
+  }
+
   function openAddCoupon() {
     setEditingCoupon(null)
     setCouponForm(emptyCouponForm)
@@ -336,16 +394,18 @@ export function CoachPackages() {
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 font-body text-sm text-gray-500 hover:bg-gray-50 transition-colors">
             <CreditCard size={14} strokeWidth={1.8} /> Stripe
           </button>
-          {activeTab === 'packages'
-            ? <Button onClick={openAdd}><Plus size={14} strokeWidth={2} /> Add Package</Button>
-            : <Button onClick={openAddCoupon}><Plus size={14} strokeWidth={2} /> Add Coupon</Button>
-          }
+          {activeTab === 'packages' && (
+            <Button onClick={openAdd}><Plus size={14} strokeWidth={2} /> Add Package</Button>
+          )}
+          {activeTab === 'coupons' && (
+            <Button onClick={openAddCoupon}><Plus size={14} strokeWidth={2} /> Add Coupon</Button>
+          )}
         </div>
       </div>
 
       {/* Tab switcher */}
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {([['packages', 'Packages', CreditCard], ['coupons', 'Coupons', Tag]] as const).map(([id, label, Icon]) => (
+        {([['catalog', 'Catalog', BookOpen], ['packages', 'Packages', CreditCard], ['coupons', 'Coupons', Tag]] as const).map(([id, label, Icon]) => (
           <button key={id} onClick={() => setActiveTab(id)}
             className={`flex items-center gap-1.5 px-4 py-2.5 font-body text-sm font-medium border-b-2 -mb-px transition-colors
               ${activeTab === id ? 'border-brand-violet text-brand-violet' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
@@ -353,6 +413,183 @@ export function CoachPackages() {
           </button>
         ))}
       </div>
+
+      {/* ── CATALOG TAB ── */}
+      {activeTab === 'catalog' && (
+        <div>
+          {/* Founding spots tracker */}
+          {['community', 'autonomy', 'vip'].some(g => {
+            const s = foundingSpotsFor(g); return s.total > 0
+          }) && (
+            <div className="mb-5 flex flex-wrap items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl">
+              <span className="font-body text-xs font-semibold text-amber-700">Founding spots remaining:</span>
+              {[
+                { g: 'community', label: 'Community' },
+                { g: 'autonomy', label: 'Autonomy' },
+                { g: 'vip', label: 'VIP' },
+              ].map(({ g, label }) => {
+                const s = foundingSpotsFor(g)
+                if (!s.total) return null
+                const remaining = s.total - s.taken
+                return (
+                  <span key={g} className={`font-body text-xs px-2 py-0.5 rounded-full font-medium
+                    ${remaining > 0 ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-500 line-through'}`}>
+                    {label} [{s.taken}/{s.total}]
+                  </span>
+                )
+              })}
+            </div>
+          )}
+
+          {catalogLoading ? (
+            <div className="flex justify-center py-24"><Spinner /></div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {catalog.map(pkg => {
+                const spots = foundingSpotsFor(pkg.founding_spot_group)
+                const foundingRemaining = spots.total - spots.taken
+                const hasFoundingSpots = !!pkg.founding_price_cad && foundingRemaining > 0
+
+                return (
+                  <div key={pkg.id}
+                    className={`bg-white rounded-xl border overflow-hidden
+                      ${pkg.recommended ? 'border-brand-violet ring-1 ring-brand-violet/20' : 'border-gray-200'}`}>
+                    {/* Card header */}
+                    <div className="bg-brand-deep px-5 py-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-heading text-xl italic font-semibold text-white">{pkg.name}</h3>
+                          {pkg.tagline && <p className="font-body text-xs text-brand-lavender/70 mt-0.5">{pkg.tagline}</p>}
+                        </div>
+                        {pkg.recommended && (
+                          <span className="px-2.5 py-1 rounded-full bg-brand-violet text-white font-body text-xs font-semibold">
+                            Recommended
+                          </span>
+                        )}
+                      </div>
+                      {/* Price */}
+                      <div className="mt-3 flex items-end gap-2">
+                        {hasFoundingSpots ? (
+                          <>
+                            <span className="font-body text-sm text-brand-lavender/50 line-through">${pkg.price_cad}</span>
+                            <span className="font-heading text-2xl font-bold text-white">${pkg.founding_price_cad}</span>
+                            <span className="font-body text-sm text-brand-lavender/70">CAD / mo</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="font-heading text-2xl font-bold text-white">${pkg.price_cad}</span>
+                            <span className="font-body text-sm text-brand-lavender/70">CAD / mo</span>
+                          </>
+                        )}
+                      </div>
+                      {hasFoundingSpots && (
+                        <p className="font-body text-xs text-amber-300 mt-1">
+                          Founding price — {foundingRemaining} spot{foundingRemaining !== 1 ? 's' : ''} left
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Features */}
+                    <div className="px-5 py-4 space-y-3">
+                      {pkg.features.map((f, i) => (
+                        <div key={i} className="flex items-start gap-2.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand-violet flex-shrink-0 mt-1.5" />
+                          <div>
+                            <span className="font-body text-sm font-semibold text-gray-800">{f.title}</span>
+                            {f.desc && <p className="font-body text-xs text-gray-400 mt-0.5">{f.desc}</p>}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Unique advantage */}
+                      {pkg.unique_advantage && (
+                        <div className="mt-3 px-3 py-2.5 rounded-lg bg-brand-lavender border border-brand-lavender">
+                          <p className="font-body text-xs font-semibold text-brand-deep mb-0.5">Exclusive</p>
+                          <p className="font-body text-xs text-brand-deep/70">{pkg.unique_advantage}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Assign buttons */}
+                    <div className="px-5 pb-4 flex gap-2">
+                      <button
+                        onClick={() => openAssign(pkg)}
+                        className="flex-1 py-2 rounded-lg bg-brand-deep text-white font-body text-sm font-medium hover:bg-brand-deep/90 transition-colors">
+                        Assign to Client
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Assign modal */}
+          {showAssignModal && assigningPkg && (
+            <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-heading text-lg font-semibold text-gray-900">Assign Package</h2>
+                  <button onClick={() => setShowAssignModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={16} /></button>
+                </div>
+                <p className="font-body text-sm text-gray-500 mb-4">
+                  Assigning: <span className="font-semibold text-brand-deep">{assigningPkg.name}</span>
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block font-body text-xs font-medium text-gray-600 mb-1.5">Select client</label>
+                    <select
+                      value={selectedClientId}
+                      onChange={e => setSelectedClientId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 font-body text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-violet/20">
+                      <option value="">— Choose a client —</option>
+                      {clients.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.full_name ?? c.id}{c.forfait ? ` (${c.forfait})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {assigningPkg.founding_price_cad && (() => {
+                    const spots = foundingSpotsFor(assigningPkg.founding_spot_group)
+                    const remaining = spots.total - spots.taken
+                    return remaining > 0 ? (
+                      <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg bg-amber-50 border border-amber-200">
+                        <input type="checkbox" checked={assignAsFounding}
+                          onChange={e => setAssignAsFounding(e.target.checked)}
+                          className="mt-0.5 accent-brand-violet" />
+                        <div>
+                          <p className="font-body text-sm font-semibold text-amber-800">Founding member price</p>
+                          <p className="font-body text-xs text-amber-600">
+                            ${assigningPkg.founding_price_cad}/mo instead of ${assigningPkg.price_cad}/mo — {remaining} spot{remaining !== 1 ? 's' : ''} left
+                          </p>
+                        </div>
+                      </label>
+                    ) : null
+                  })()}
+                  {assignError && <p className="font-body text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{assignError}</p>}
+                </div>
+                <div className="flex gap-3 mt-6">
+                  <button onClick={() => setShowAssignModal(false)}
+                    className="flex-1 px-4 py-2 rounded-lg border border-gray-200 font-body text-sm text-gray-600 hover:bg-gray-50">
+                    Cancel
+                  </button>
+                  <Button onClick={doAssign} loading={assigning} className="flex-1">
+                    Confirm
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Assignment toast */}
+          {assignToast && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl shadow-lg font-body text-sm">
+              <Check size={14} className="text-green-400" /> {assignToast}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── COUPONS TAB ── */}
       {activeTab === 'coupons' && (
