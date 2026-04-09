@@ -18,6 +18,7 @@ import { ClientWorkouts } from './pages/client/MyWorkouts'
 import { ClientNutrition } from './pages/client/Nutrition'
 import { ClientCheckIn } from './pages/client/CheckIn'
 import { ClientMessages } from './pages/client/Messages'
+import { ClientMyPackage } from './pages/client/MyPackage'
 
 export default function App() {
   const auth = useAuth()
@@ -54,6 +55,7 @@ export default function App() {
             <Route path="nutrition" element={<ClientNutrition />} />
             <Route path="checkin" element={<ClientCheckIn />} />
             <Route path="messages" element={<ClientMessages />} />
+            <Route path="package" element={<ClientMyPackage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/login" replace />} />

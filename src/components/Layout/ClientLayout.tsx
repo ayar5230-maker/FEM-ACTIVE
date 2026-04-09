@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Home, Dumbbell, Apple, ClipboardCheck, MessageSquare, LogOut } from 'lucide-react'
+import { Home, Dumbbell, Apple, ClipboardCheck, MessageSquare, LogOut, Star } from 'lucide-react'
 import { signOut } from '../../lib/auth'
 import { useUnreadMessages } from '../../hooks/useUnreadMessages'
 import { useAuthContext } from '../../contexts/AuthContext'
@@ -10,6 +10,7 @@ const navItems = [
   { to: '/client/nutrition', label: 'Nutrition', icon: Apple },
   { to: '/client/checkin', label: 'Check-in', icon: ClipboardCheck },
   { to: '/client/messages', label: 'Messages', icon: MessageSquare, hasUnread: true },
+  { to: '/client/package', label: 'My Package', icon: Star },
 ]
 
 export function ClientLayout() {

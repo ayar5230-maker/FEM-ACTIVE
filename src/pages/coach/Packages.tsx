@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, MoreHorizontal, CreditCard, Pencil, Trash2, X, Link, Eye, Check, Info, Tag } from 'lucide-react'
+import { Plus, MoreHorizontal, CreditCard, Pencil, Trash2, X, Link, Eye, Check, Info, Tag, BookOpen } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { Button } from '../../components/ui/Button'
@@ -61,9 +61,45 @@ const emptyForm = {
 
 const STEPS = ['Setup', 'Automations', 'Benefits']
 
+interface CatalogPackage {
+  id: string
+  slug: string
+  name: string
+  tagline: string | null
+  price_cad: number
+  price_note: string | null
+  features: Array<{ title: string; desc: string }>
+  unique_advantage: string | null
+  recommended: boolean
+  display_order: number
+  founding_price_cad: number | null
+  founding_total_spots: number | null
+  founding_spot_group: string | null
+  active: boolean
+}
+
+interface ClientOption {
+  id: string
+  full_name: string | null
+  forfait: string | null
+  is_founding: boolean
+}
+
 export function CoachPackages() {
   const { profile } = useAuthContext()
-  const [activeTab, setActiveTab] = useState<'packages' | 'coupons'>('packages')
+  const [activeTab, setActiveTab] = useState<'catalog' | 'packages' | 'coupons'>('catalog')
+
+  // Catalog state
+  const [catalog, setCatalog] = useState<CatalogPackage[]>([])
+  const [catalogLoading, setCatalogLoading] = useState(true)
+  const [clients, setClients] = useState<ClientOption[]>([])
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [assigningPkg, setAssigningPkg] = useState<CatalogPackage | null>(null)
+  const [selectedClientId, setSelectedClientId] = useState('')
+  const [assignAsFounding, setAssignAsFounding] = useState(false)
+  const [assigning, setAssigning] = useState(false)
+  const [assignError, setAssignError] = useState('')
+  const [assignToast, setAssignToast] = useState('')
 
   // Packages state
   const [packages, setPackages] = useState<Package[]>([])
@@ -87,7 +123,7 @@ export function CoachPackages() {
   const [savingCoupon, setSavingCoupon] = useState(false)
   const [couponError, setCouponError] = useState('')
 
-  useEffect(() => { loadPackages(); loadCoupons() }, [profile])
+  useEffect(() => { loadPackages(); loadCoupons(); loadCatalog(); loadClients() }, [profile])
 
   async function loadPackages() {
     if (!profile) return
