@@ -56,7 +56,7 @@ values
    {"title":"Complete tracking ecosystem","desc":"Weight loss/gain guides, gym progress trackers, and daily mood/motivation monitoring"}
  ]'::jsonb,
  'Weekly live coaching session — the only package with a real-time call with your coach every single week',
- false, 4, 225, 3, 'vip', true, true, 'CAD', 'Monthly', 'Until Cancelled', 'Monthly'),
+ true, 4, 225, 3, 'vip', true, true, 'CAD', 'Monthly', 'Until Cancelled', 'Monthly'),
 
 -- 5. VIP + Nutrition
 (null, 'vip-nutrition', 'VIP + Nutrition', 'Zero Mental Load', 340,
@@ -69,4 +69,4 @@ values
    {"title":"Complete tracking ecosystem","desc":"Weight loss/gain guides, gym progress trackers, and daily mood/motivation monitoring"}
  ]'::jsonb,
  'Live coaching + full nutrition — the only package combining real-time weekly sessions with a complete personalized nutrition strategy',
- true, 5, 255, 3, 'vip', true, true, 'CAD', 'Monthly', 'Until Cancelled', 'Monthly');
+ false, 5, 255, 3, 'vip', true, true, 'CAD', 'Monthly', 'Until Cancelled', 'Monthly');
