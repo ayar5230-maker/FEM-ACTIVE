@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signIn, signUp } from '../lib/auth'
 import { supabase } from '../lib/supabase'
@@ -19,6 +19,8 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [signupSuccess, setSignupSuccess] = useState(false)
+  const [slowMsg, setSlowMsg] = useState('')
+  const slowRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!loading && profile) {
@@ -29,19 +31,29 @@ export function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setSlowMsg('')
     setSubmitting(true)
 
-    // 10-second timeout so the button never spins forever
+    // After 8 seconds show a "waking up" hint
+    slowRef.current = setTimeout(() => {
+      setSlowMsg('Server is starting up, please wait a moment…')
+    }, 8000)
+
+    // 60-second hard timeout
     const timer = setTimeout(() => {
+      if (slowRef.current) clearTimeout(slowRef.current)
       setSubmitting(false)
-      setError('Connection too slow. Check your internet connection or make sure your Supabase project is active (supabase.com/dashboard).')
-    }, 10000)
+      setSlowMsg('')
+      setError('Could not reach the server after 60 s. Go to supabase.com/dashboard and make sure your project is active, then try again.')
+    }, 60000)
 
     if (mode === 'login') {
       try {
         console.log('[Login] calling signIn...')
         const { data, error: err } = await signIn(email, password)
         clearTimeout(timer)
+        if (slowRef.current) clearTimeout(slowRef.current)
+        setSlowMsg('')
         console.log('[Login] signIn result:', { user: data?.user?.id, err })
 
         if (err || !data.user) {
@@ -69,6 +81,8 @@ export function LoginPage() {
         navigate(prof.role === 'coach' ? '/coach' : '/client', { replace: true })
       } catch (ex) {
         clearTimeout(timer)
+        if (slowRef.current) clearTimeout(slowRef.current)
+        setSlowMsg('')
         const msg = ex instanceof Error ? ex.message : String(ex)
         console.error('[Login] exception:', msg)
         setError(`Unexpected error: ${msg}`)
@@ -77,12 +91,16 @@ export function LoginPage() {
     } else {
       if (!fullName.trim()) {
         clearTimeout(timer)
+        if (slowRef.current) clearTimeout(slowRef.current)
+        setSlowMsg('')
         setError('First name is required.')
         setSubmitting(false)
         return
       }
       const { error: err } = await signUp(email, password, fullName)
       clearTimeout(timer)
+      if (slowRef.current) clearTimeout(slowRef.current)
+      setSlowMsg('')
       if (err) {
         setError(err.message)
       } else {
@@ -217,6 +235,12 @@ export function LoginPage() {
                       transition-all"
                   />
                 </div>
+
+                {slowMsg && (
+                  <p className="font-body text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
+                    {slowMsg}
+                  </p>
+                )}
 
                 {error && (
                   <p className="font-body text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
